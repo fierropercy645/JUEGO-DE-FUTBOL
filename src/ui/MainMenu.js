@@ -7,46 +7,70 @@ export class MainMenu {
     const hasLeague = this.app.hasSavedLeague();
 
     return `
-      <div class="screen" style="justify-content: center; align-items: center; text-align: center; background: radial-gradient(circle at 50% 30%, #17243c 0%, #0b0f19 70%);">
-        <div style="margin-bottom: 40px;">
-          <h1 style="font-size: 3.5rem; font-weight: 900; letter-spacing: 2px; color: #ffffff; text-transform: uppercase;">
-            FOOTBALL <span style="color: var(--accent-green);">LEGENDS</span>
-          </h1>
-          <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 8px;">
-            Simulador de Fútbol 2D & Competición de Liga
-          </p>
-        </div>
+      <div class="screen main-cover-screen">
+        <!-- Luces y Efectos de Estadio de Fondo -->
+        <div class="stadium-spotlights"></div>
+        <div class="stadium-crowd-silhouette"></div>
 
-        <div style="display: flex; flex-direction: column; gap: 16px; width: 320px;">
-          <button id="btnQuickMatch" class="btn btn-primary" style="padding: 16px; font-size: 1.1rem;">
-            ⚽ Partido Rápido
-          </button>
-          
-          ${hasLeague ? `
-            <button id="btnContinueLeague" class="btn" style="border-color: var(--accent-gold); color: var(--accent-gold); padding: 16px; font-size: 1.1rem;">
-              🏆 Continuar Liga
+        <div class="cover-content">
+          <!-- Insignia / Badge de torneo -->
+          <div class="cover-badge">
+            <span class="badge-icon">⚽</span>
+            <span class="badge-text">COPA DE LEYENDAS 2026 • ARCADE PRO</span>
+            <span class="badge-icon">⭐</span>
+          </div>
+
+          <!-- Título Portada 3D Impactante -->
+          <div class="cover-title-container">
+            <h1 class="cover-title-main">
+              FOOTBALL
+              <span class="cover-title-glow">LEGENDS</span>
+            </h1>
+            <div class="cover-subtitle">
+              EL SIMULADOR DE FÚTBOL DEFINITIVO • GOLAZOS, VASELINAS Y PENALES
+            </div>
+          </div>
+
+          <!-- Puntos destacados / Features de Portada -->
+          <div class="cover-features">
+            <div class="feat-pill">⚡ FÍSICA CON COMBA</div>
+            <div class="feat-pill">🧤 ATAJADAS DE ARQUERO</div>
+            <div class="feat-pill">🔥 TIROS CON POTENCIA</div>
+            <div class="feat-pill">🏆 MODO LIGA COMPLETO</div>
+          </div>
+
+          <!-- Menú de Acciones Principal -->
+          <div class="cover-menu-actions">
+            <button id="btnQuickMatch" class="btn btn-primary btn-cover-start">
+              <span style="font-size: 1.3rem;">⚽</span> ¡JUGAR PARTIDO RÁPIDO!
             </button>
-          ` : ''}
+            
+            ${hasLeague ? `
+              <button id="btnContinueLeague" class="btn btn-cover-league">
+                🏆 CONTINUAR LIGA DE CAMPEONES
+              </button>
+            ` : ''}
 
-          <button id="btnNewLeague" class="btn" style="padding: 14px;">
-            🏆 ${hasLeague ? 'Nueva Liga' : 'Modo Liga'}
-          </button>
+            <div class="cover-secondary-grid">
+              <button id="btnNewLeague" class="btn">
+                🏆 ${hasLeague ? 'Nueva Liga' : 'Modo Liga'}
+              </button>
+              <button id="btnTeams" class="btn">
+                🛡️ Plantillas
+              </button>
+              <button id="btnStats" class="btn">
+                📊 Récords
+              </button>
+              <button id="btnSettings" class="btn">
+                ⚙️ Opciones
+              </button>
+            </div>
+          </div>
 
-          <button id="btnTeams" class="btn" style="padding: 14px;">
-            🛡️ Equipos y Plantillas
-          </button>
-
-          <button id="btnStats" class="btn" style="padding: 14px;">
-            📊 Estadísticas
-          </button>
-
-          <button id="btnSettings" class="btn" style="padding: 14px;">
-            ⚙️ Configuración
-          </button>
-        </div>
-
-        <div style="position: absolute; bottom: 20px; color: var(--text-muted); font-size: 0.85rem;">
-          Versión 1.0.0 Web Edition • Modular & Determinista
+          <!-- Pie de página -->
+          <div class="cover-footer">
+            <span>Desarrollado con HTML5 Canvas • Sonido y Físicas en Tiempo Real</span>
+          </div>
         </div>
       </div>
     `;

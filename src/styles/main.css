@@ -106,3 +106,158 @@ body {
   box-shadow: inset -2px -2px 0px 0px rgba(0, 0, 0, 0.5), inset 2px 2px 0px 0px rgba(255, 255, 255, 0.05);
   padding: 24px;
 }
+
+/* =========================================================
+   PORTADA DE IMPACTO / COVER HERO STYLES
+   ========================================================= */
+.main-cover-screen {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: radial-gradient(circle at 50% 25%, #1e293b 0%, #0f172a 45%, #020617 100%);
+  width: 100%;
+  height: 100%;
+}
+
+.stadium-spotlights {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: 
+    radial-gradient(ellipse at 20% 0%, rgba(56, 189, 248, 0.28) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 0%, rgba(16, 185, 129, 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+  animation: lightsPulse 6s ease-in-out infinite alternate;
+}
+
+.stadium-crowd-silhouette {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110px;
+  background: linear-gradient(to top, rgba(2, 6, 23, 0.95), transparent);
+  pointer-events: none;
+}
+
+@keyframes lightsPulse {
+  0% { opacity: 0.7; transform: scaleY(0.95); }
+  100% { opacity: 1.0; transform: scaleY(1.05); }
+}
+
+.cover-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 850px;
+  padding: 20px;
+}
+
+.cover-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 18px;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1.5px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+
+.cover-title-main {
+  font-size: 4.2rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #ffffff;
+  text-transform: uppercase;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(255, 255, 255, 0.2);
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+
+.cover-title-glow {
+  color: var(--accent-green);
+  text-shadow: 0 0 25px rgba(16, 185, 129, 0.8), 0 0 50px rgba(16, 185, 129, 0.4);
+}
+
+.cover-subtitle {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  margin-bottom: 28px;
+  font-weight: 600;
+  max-width: 650px;
+}
+
+.cover-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.feat-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  color: #e2e8f0;
+  backdrop-filter: blur(4px);
+}
+
+.cover-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.btn-cover-start {
+  padding: 18px 24px !important;
+  font-size: 1.05rem !important;
+  letter-spacing: 1px;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.3) !important;
+  border-radius: 6px;
+  animation: pulseGlow 2.5s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 0 35px rgba(16, 185, 129, 0.7); }
+}
+
+.btn-cover-league {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: var(--accent-gold) !important;
+  color: var(--accent-gold) !important;
+  padding: 14px !important;
+  font-size: 0.8rem !important;
+}
+
+.cover-secondary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cover-footer {
+  margin-top: 32px;
+  color: #64748b;
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+}
