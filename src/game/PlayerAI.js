@@ -11,29 +11,29 @@ export class PlayerAI {
   static update(player, ball, team, opponentTeam, pitchWidth, pitchHeight, difficulty = DIFFICULTY.NORMAL, executePassCb, executeShootCb) {
     if (player.position === 'GK') return;
 
-    let speedFactor = 1.0;
+    let speedFactor = 0.82;
     let shootChance = 0.04;
-    let pressDistance = 300;
+    let pressDistance = 260;
     let passChance = 0.025;
     let slideChance = 0.02;
-    let shootRange = 300;
+    let shootRange = 290;
 
     if (difficulty === DIFFICULTY.EASY) {
-      // FÁCIL: Rival lento, marcas muy lejanas y pasivas, rara vez dispara y arquero fácil
-      speedFactor = 0.58;
+      // FÁCIL: Rival lento y pausado
+      speedFactor = 0.52;
       shootChance = 0.008;
-      pressDistance = 150;
+      pressDistance = 140;
       passChance = 0.01;
       slideChance = 0;
-      shootRange = 220;
+      shootRange = 210;
     } else if (difficulty === DIFFICULTY.HARD) {
-      // DIFÍCIL: Presión asfixiante inmediata por todo el campo, pases rápidos, barridas feroces y tiros letales
-      speedFactor = 1.38;
-      shootChance = 0.09;
-      pressDistance = 550;
-      passChance = 0.055;
-      slideChance = 0.08;
-      shootRange = 380;
+      // DIFÍCIL: Rápido pero proporcionado al estadio
+      speedFactor = 1.05;
+      shootChance = 0.08;
+      pressDistance = 420;
+      passChance = 0.045;
+      slideChance = 0.05;
+      shootRange = 340;
     }
 
     const hasBall = ball.owner === player;
@@ -74,7 +74,7 @@ export class PlayerAI {
 
       // Conducir enfilando hacia el arco rival
       const dirToGoal = normalize(oppGoalX - player.x, oppGoalY - player.y);
-      const spd = (player.speed / 100) * 3.2 * speedFactor;
+      const spd = (player.speed / 100) * 2.45 * speedFactor;
       player.vx = dirToGoal.x * spd;
       player.vy = dirToGoal.y * spd;
       player.facingX = dirToGoal.x;
@@ -100,7 +100,7 @@ export class PlayerAI {
       const distFromHome = distance(player.homeX, player.homeY, ball.x, ball.y);
       if (distFromHome < pressDistance || player.position === 'FWD' || difficulty === DIFFICULTY.HARD) {
         const dir = normalize(ball.x - player.x, ball.y - player.y);
-        const spd = (player.speed / 100) * 3.4 * speedFactor;
+        const spd = (player.speed / 100) * 2.65 * speedFactor;
         player.vx = dir.x * spd;
         player.vy = dir.y * spd;
         player.facingX = dir.x;

@@ -182,8 +182,9 @@ export class Match {
 
     const isSprinting = controls.isActionActive('sprint');
     const move = controls.getMovementVector();
-    const speedMult = isSprinting ? 1.4 : 1.0;
-    const playerSpeed = (this.userControlledPlayer.speed / 100) * 3.8 * speedMult;
+    // Velocidad realista y cadenciosa: trote normal a 2.55, sprint con K a 3.35
+    const speedMult = isSprinting ? 1.32 : 1.0;
+    const playerSpeed = (this.userControlledPlayer.speed / 100) * 2.55 * speedMult;
 
     if (move.x !== 0 || move.y !== 0) {
       this.userControlledPlayer.vx = move.x * playerSpeed;
