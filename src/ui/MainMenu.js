@@ -8,15 +8,17 @@ export class MainMenu {
 
     return `
       <div class="screen main-cover-screen">
-        <!-- Luces y Efectos de Estadio de Fondo -->
-        <div class="stadium-spotlights"></div>
-        <div class="stadium-crowd-silhouette"></div>
+        <!-- Canvas gigante de estadio y golazo de fondo / portada inmersiva -->
+        <canvas id="coverCanvas" width="960" height="580" class="cover-hero-canvas"></canvas>
+
+        <!-- Capa de oscurecimiento suave para legibilidad de botones -->
+        <div class="cover-hero-overlay"></div>
 
         <div class="cover-content">
-          <!-- Insignia / Badge de torneo -->
+          <!-- Insignia de torneo superior -->
           <div class="cover-badge">
             <span class="badge-icon">⚽</span>
-            <span class="badge-text">COPA DE LEYENDAS 2026 • ARCADE PRO</span>
+            <span class="badge-text">FOOTBALL LEGENDS 2026 • ARCADE PRO</span>
             <span class="badge-icon">⭐</span>
           </div>
 
@@ -27,17 +29,11 @@ export class MainMenu {
               <span class="cover-title-glow">LEGENDS</span>
             </h1>
             <div class="cover-subtitle">
-              EL SIMULADOR DE FÚTBOL DEFINITIVO • GOLAZOS, VASELINAS Y PENALES
+              ¡EL GOLAZO DEFINITIVO! • CAÑONAZOS, CHILENAS Y ATAJADAS EN VIVO
             </div>
           </div>
 
-          <!-- MINI CANCHA CON ANIMACIÓN DE CHILENA / GOLAZO ESPECTACULAR EN VIVO -->
-          <div class="cover-animation-card">
-            <canvas id="coverCanvas" width="460" height="150" class="cover-live-canvas"></canvas>
-            <div class="cover-anim-badge">🔥 JUGADA MAESTRA • CHILENA AL ÁNGULO 🔥</div>
-          </div>
-
-          <!-- Puntos destacados / Features de Portada -->
+          <!-- Puntos destacados de portada -->
           <div class="cover-features">
             <div class="feat-pill">⚡ FÍSICA CON COMBA</div>
             <div class="feat-pill">🧤 ATAJADAS DE ARQUERO</div>
@@ -75,7 +71,7 @@ export class MainMenu {
 
           <!-- Pie de página -->
           <div class="cover-footer">
-            <span>Desarrollado con HTML5 Canvas • Sonido y Físicas en Tiempo Real</span>
+            <span>Disfruta el simulador en HTML5 Canvas con físicas y sonido en tiempo real</span>
           </div>
         </div>
       </div>
@@ -132,162 +128,295 @@ export class MainMenu {
     let animId = null;
 
     const loop = () => {
-      t += 0.025;
-      const progress = (t % 3.8) / 3.8; // Ciclo de 3.8s
+      t += 0.022;
+      const progress = (t % 4.0) / 4.0; // Ciclo continuo de 4.0s
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const W = canvas.width;
+      const H = canvas.height;
 
-      // Fondo de césped mini estadio
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const turfGrad = ctx.createLinearGradient(0, 0, canvas.width, 0);
-      turfGrad.addColorStop(0, '#064e3b');
-      turfGrad.addColorStop(0.5, '#047857');
-      turfGrad.addColorStop(1, '#064e3b');
-      ctx.fillStyle = turfGrad;
-      ctx.fillRect(10, 10, canvas.width - 20, canvas.height - 20);
+      ctx.clearRect(0, 0, W, H);
 
-      // Líneas de césped
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+      // 1. Cielo nocturno y gradiente de estadio épico
+      const skyGrad = ctx.createRadialGradient(W / 2, H * 0.35, 50, W / 2, H * 0.35, W * 0.7);
+      skyGrad.addColorStop(0, '#1e293b');
+      skyGrad.addColorStop(0.5, '#0f172a');
+      skyGrad.addColorStop(1, '#020617');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Focos de estadio que iluminan la cancha
+      const spotGrad1 = ctx.createRadialGradient(160, 40, 5, 260, 280, 320);
+      spotGrad1.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+      spotGrad1.addColorStop(1, 'transparent');
+      ctx.fillStyle = spotGrad1;
+      ctx.fillRect(0, 0, W, H);
+
+      const spotGrad2 = ctx.createRadialGradient(W - 160, 40, 5, W - 260, 280, 320);
+      spotGrad2.addColorStop(0, 'rgba(250, 204, 21, 0.30)');
+      spotGrad2.addColorStop(1, 'transparent');
+      ctx.fillStyle = spotGrad2;
+      ctx.fillRect(0, 0, W, H);
+
+      // Graderías en el horizonte
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.fillRect(0, H * 0.52, W, H * 0.12);
+      // Luces de flashes en la tribuna
+      for (let i = 0; i < 16; i++) {
+        if (Math.sin(t * 12 + i * 3) > 0.88) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect((i * 61 + (t * 20)) % W, H * 0.54 + (i % 3) * 6, 3, 3);
+        }
+      }
+
+      // Césped verde iluminado con perspectiva
+      const pitchGrad = ctx.createLinearGradient(0, H * 0.60, 0, H);
+      pitchGrad.addColorStop(0, '#047857');
+      pitchGrad.addColorStop(0.5, '#059669');
+      pitchGrad.addColorStop(1, '#064e3b');
+      ctx.fillStyle = pitchGrad;
+      ctx.fillRect(0, H * 0.60, W, H * 0.40);
+
+      // Líneas reglamentarias en el césped
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(canvas.width / 2, 10);
-      ctx.lineTo(canvas.width / 2, canvas.height - 10);
+      // Línea de meta y área
+      ctx.moveTo(W * 0.15, H * 0.85);
+      ctx.lineTo(W * 0.85, H * 0.85);
       ctx.stroke();
 
-      // Arco derecho
-      const goalX = canvas.width - 26;
-      const goalY = 40;
-      const goalH = 70;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.fillRect(goalX, goalY, 4, goalH);
-      // Red del arco
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      // Punto penal
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(W * 0.42, H * 0.85, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Portería / Arco profesional iluminado a la derecha
+      const goalX = W * 0.84;
+      const goalY = H * 0.62;
+      const goalW = 75;
+      const goalH = 130;
+
+      // Sombra del arco
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fillRect(goalX, goalY + goalH - 8, goalW, 16);
+
+      // Malla del arco tejida
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
       ctx.lineWidth = 1;
-      for (let gy = goalY; gy <= goalY + goalH; gy += 8) {
+      for (let gx = goalX; gx <= goalX + goalW; gx += 10) {
+        ctx.beginPath();
+        ctx.moveTo(gx, goalY);
+        ctx.lineTo(gx, goalY + goalH);
+        ctx.stroke();
+      }
+      for (let gy = goalY; gy <= goalY + goalH; gy += 10) {
         ctx.beginPath();
         ctx.moveTo(goalX, gy);
-        ctx.lineTo(goalX + 14, gy);
+        ctx.lineTo(goalX + goalW, gy);
         ctx.stroke();
       }
 
-      // 1. Futbolista Delantero Estrella (Chilena / Tijera acrobática)
-      const strikerX = 140;
-      const strikerBaseY = 85;
-      let strikerY = strikerBaseY;
-      let strikerRot = 0;
+      // Postes y travesaño metálico
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(goalX, goalY + goalH);
+      ctx.lineTo(goalX, goalY);
+      ctx.lineTo(goalX + goalW, goalY + 8);
+      ctx.stroke();
 
-      if (progress < 0.35) {
-        // En carrera preparatoria
-        strikerY = strikerBaseY;
-        strikerRot = 0;
-      } else if (progress < 0.65) {
-        // Salto y pirueta de chilena en el aire
-        const jumpP = (progress - 0.35) / 0.3;
-        strikerY = strikerBaseY - Math.sin(jumpP * Math.PI) * 24;
-        strikerRot = -jumpP * Math.PI * 1.3;
+      // ==========================================
+      // FASE DE ANIMACIÓN: JUGADOR HACIENDO GOLAZO
+      // ==========================================
+      const strikerOriginX = W * 0.34;
+      const strikerGroundY = H * 0.82;
+      let strikerX = strikerOriginX;
+      let strikerY = strikerGroundY;
+      let strikerAngle = 0;
+
+      if (progress < 0.30) {
+        // Fase 1: Carrera veloz hacia el balón
+        const p = progress / 0.30;
+        strikerX = strikerOriginX + p * 60;
+        strikerY = strikerGroundY - Math.abs(Math.sin(p * Math.PI * 4)) * 6;
+        strikerAngle = 0.15;
+      } else if (progress < 0.62) {
+        // Fase 2: Salto acrobático de chilena y patada en el aire
+        const p = (progress - 0.30) / 0.32;
+        strikerX = strikerOriginX + 60 + p * 20;
+        strikerY = strikerGroundY - Math.sin(p * Math.PI) * 55;
+        strikerAngle = -p * Math.PI * 1.4;
       } else {
-        // Caída celebrando
-        strikerY = strikerBaseY;
-        strikerRot = 0;
+        // Fase 3: Aterrizaje y celebración con los puños arriba
+        const p = (progress - 0.62) / 0.38;
+        strikerX = strikerOriginX + 80;
+        strikerY = strikerGroundY - Math.abs(Math.sin(p * Math.PI * 3)) * 8;
+        strikerAngle = 0;
+      }
+
+      // Render del futbolista que remata
+      ctx.save();
+      ctx.translate(strikerX, strikerY);
+      ctx.rotate(strikerAngle);
+
+      // Sombra en césped
+      if (strikerY >= strikerGroundY - 10) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(0, 14, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Cuerpo / Camiseta deportiva número 10
+      ctx.fillStyle = '#2563eb'; // Azul rey
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-9, -10, 18, 16, 4);
+      else ctx.rect(-9, -10, 18, 16);
+      ctx.fill();
+
+      // Cuello amarillo
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(-3, -10, 6, 4);
+
+      // Shorts blancos
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-8, 6, 16, 8);
+
+      // Cabeza
+      ctx.fillStyle = '#ffcca3';
+      ctx.beginPath();
+      ctx.arc(0, -18, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pelo
+      ctx.fillStyle = '#1e1b18';
+      ctx.beginPath();
+      ctx.arc(0, -20, 7, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      // Piernas estiradas disparando
+      ctx.fillStyle = '#ffcca3';
+      ctx.fillRect(progress >= 0.30 && progress < 0.62 ? 4 : -6, 14, 5, 12);
+      ctx.fillRect(progress >= 0.30 && progress < 0.62 ? 10 : 2, 14, 5, 12);
+
+      // Botines dorados
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(progress >= 0.30 && progress < 0.62 ? 8 : -8, 24, 7, 4);
+      ctx.fillRect(progress >= 0.30 && progress < 0.62 ? 14 : 2, 24, 7, 4);
+
+      // Brazos festivos
+      if (progress >= 0.62) {
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(-14, -18, 5, 14);
+        ctx.fillRect(9, -18, 5, 14);
+      }
+      ctx.restore();
+
+      // ==========================================
+      // FASE DEL BALÓN CON TRAYECTORIA Y FUEGO
+      // ==========================================
+      let ballX = W * 0.22;
+      let ballY = H * 0.80;
+
+      if (progress < 0.30) {
+        // Balón rodando o botando hacia la zona del rematador
+        const p = progress / 0.30;
+        ballX = W * 0.22 + p * (W * 0.18);
+        ballY = H * 0.80 - Math.sin(p * Math.PI) * 24;
+      } else if (progress < 0.66) {
+        // Balón impactado que vuela como misil con curva hacia la escuadra
+        const p = (progress - 0.30) / 0.36;
+        ballX = (W * 0.40) + p * (goalX - (W * 0.40) + 12);
+        ballY = (H * 0.72) - Math.sin(p * Math.PI * 0.65) * 60;
+      } else {
+        // Balón inflando la red sacudiéndose
+        ballX = goalX + 22;
+        ballY = (goalY + 28) + Math.sin(t * 14) * 4;
+      }
+
+      // Estela de fuego del bólido
+      if (progress > 0.30 && progress < 0.75) {
+        ctx.save();
+        for (let s = 1; s <= 4; s++) {
+          ctx.beginPath();
+          ctx.arc(ballX - s * 9, ballY + s * 2, Math.max(2, 8 - s * 1.5), 0, Math.PI * 2);
+          ctx.fillStyle = s === 1 ? 'rgba(255, 230, 0, 0.7)' : 'rgba(255, 100, 0, 0.4)';
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Render del balón esférico
+      ctx.save();
+      ctx.translate(ballX, ballY);
+      ctx.rotate(t * 12);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(0, 0, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ==========================================
+      // ARQUERO RIVAL VOLANDO AL ÁNGULO
+      // ==========================================
+      const gkBaseX = goalX - 35;
+      const gkBaseY = goalY + goalH - 18;
+      let gkX = gkBaseX;
+      let gkY = gkBaseY;
+      let gkAngle = 0;
+
+      if (progress > 0.40 && progress < 0.78) {
+        // Plancha desesperada hacia la escuadra
+        const p = (progress - 0.40) / 0.38;
+        gkX = gkBaseX + p * 18;
+        gkY = gkBaseY - Math.sin(p * Math.PI * 0.9) * 50;
+        gkAngle = -0.55;
       }
 
       ctx.save();
-      ctx.translate(strikerX, strikerY);
-      ctx.rotate(strikerRot);
+      ctx.translate(gkX, gkY);
+      ctx.rotate(gkAngle);
 
-      // Cuerpo delantero
-      ctx.fillStyle = '#3b82f6'; // Azul
+      // Buzo naranja de arquero
+      ctx.fillStyle = '#ea580c';
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(-7, -6, 14, 10, 2);
-      else ctx.rect(-7, -6, 14, 10);
+      if (ctx.roundRect) ctx.roundRect(-8, -8, 16, 14, 3);
+      else ctx.rect(-8, -8, 16, 14);
       ctx.fill();
 
       // Cabeza
       ctx.fillStyle = '#ffcca3';
       ctx.beginPath();
-      ctx.arc(0, -11, 5, 0, Math.PI * 2);
+      ctx.arc(0, -15, 6, 0, Math.PI * 2);
       ctx.fill();
 
-      // Pierna pateando hacia atrás
-      ctx.fillStyle = '#10b981';
-      ctx.fillRect(2, 4, 10, 4);
-      ctx.restore();
-
-      // 2. Balón con cometa hacia el ángulo
-      let ballX = 60;
-      let ballY = 90;
-
-      if (progress < 0.35) {
-        // Centro flotando hacia el delantero
-        const p = progress / 0.35;
-        ballX = 60 + p * 80;
-        ballY = 90 - Math.sin(p * Math.PI) * 35;
-      } else if (progress < 0.70) {
-        // Zapatazo de chilena al ángulo derecho
-        const p = (progress - 0.35) / 0.35;
-        ballX = 140 + p * (goalX - 140);
-        ballY = 65 - Math.sin(p * Math.PI * 0.5) * 15;
-      } else {
-        // Balón inflando la red
-        ballX = goalX + 6;
-        ballY = 50 + Math.sin(t * 8) * 4;
-      }
-
-      // Estela de fuego del balón
-      if (progress > 0.35 && progress < 0.75) {
-        ctx.fillStyle = 'rgba(255, 180, 0, 0.45)';
-        ctx.beginPath();
-        ctx.arc(ballX - 10, ballY + 2, 6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Balón esférico
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(ballX, ballY, 5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.arc(ballX, ballY, 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 3. Arquero rival volando para tapar
-      const gkX = goalX - 25;
-      let gkY = 75;
-      let gkRot = 0;
-
-      if (progress > 0.45 && progress < 0.80) {
-        // Plancha desesperada al ángulo
-        const p = (progress - 0.45) / 0.35;
-        gkY = 75 - Math.sin(p * Math.PI * 0.8) * 22;
-        gkRot = -0.4;
-      }
-
-      ctx.save();
-      ctx.translate(gkX, gkY);
-      ctx.rotate(gkRot);
-      ctx.fillStyle = '#f97316'; // Arquero naranja
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(-6, -5, 12, 9, 2);
-      else ctx.rect(-6, -5, 12, 9);
-      ctx.fill();
-      // Guantes verdes
+      // Guantes verdes fosforescentes volando
       ctx.fillStyle = '#22c55e';
-      ctx.fillRect(6, -6, 4, 4);
-      ctx.fillRect(6, 1, 4, 4);
+      ctx.fillRect(8, -12, 6, 6);
+      ctx.fillRect(8, -2, 6, 6);
+
       ctx.restore();
 
-      // 4. Cartel de GOLAZO cuando entra el balón
-      if (progress > 0.68) {
+      // ==========================================
+      // RÓTULO DINÁMICO DE GOLAZO AL ENTRAR EL BALÓN
+      // ==========================================
+      if (progress > 0.64) {
         ctx.save();
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 18;
         ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 13px system-ui, sans-serif';
+        ctx.font = '900 24px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur = 10;
-        ctx.fillText('⚽ ¡GOLAZOOOO DE CHILENA! ⚽', canvas.width / 2, 34);
+        ctx.fillText('⚡ ¡¡¡GOOOOOOOOOOOOOLAZO DE CHILENA!!! ⚡', W / 2, H * 0.42);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px system-ui, sans-serif';
+        ctx.fillText('¡Al ángulo de la escuadra imposible para el arquero!', W / 2, H * 0.47);
         ctx.restore();
       }
 

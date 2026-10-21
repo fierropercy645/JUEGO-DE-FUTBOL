@@ -117,43 +117,37 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  background: radial-gradient(circle at 50% 25%, #1e293b 0%, #0f172a 45%, #020617 100%);
-  width: 100%;
-  height: 100%;
+  background: #020617;
+  width: 100vw;
+  height: 100vh;
 }
 
-.stadium-spotlights {
+/* Canvas de fondo panorámico inmersivo con la animación del gol */
+.cover-hero-canvas {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 50%;
-  background: 
-    radial-gradient(ellipse at 20% 0%, rgba(56, 189, 248, 0.28) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 0%, rgba(16, 185, 129, 0.25) 0%, transparent 60%),
-    radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.22) 0%, transparent 70%);
-  pointer-events: none;
-  animation: lightsPulse 6s ease-in-out infinite alternate;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: 1;
 }
 
-.stadium-crowd-silhouette {
+/* Capa de contraste cinematográfico para resaltar los botones del menú */
+.cover-hero-overlay {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
-  right: 0;
-  height: 110px;
-  background: linear-gradient(to top, rgba(2, 6, 23, 0.95), transparent);
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at 50% 50%, rgba(2, 6, 23, 0.45) 0%, rgba(2, 6, 23, 0.88) 100%);
+  z-index: 2;
   pointer-events: none;
-}
-
-@keyframes lightsPulse {
-  0% { opacity: 0.7; transform: scaleY(0.95); }
-  100% { opacity: 1.0; transform: scaleY(1.05); }
 }
 
 .cover-content {
   position: relative;
-  z-index: 2;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
