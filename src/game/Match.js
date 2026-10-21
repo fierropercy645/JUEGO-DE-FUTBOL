@@ -9,6 +9,7 @@ import { PlayerAI } from './PlayerAI.js';
 import { MatchStatistics } from '../statistics/MatchStatistics.js';
 import { PITCH, GAME_STATES, DIFFICULTY } from '../utils/constants.js';
 import { distance, normalize } from '../utils/math.js';
+import { sound } from '../audio/SoundFX.js';
 
 export class Match {
   constructor(homeTeamData, awayTeamData, options = {}) {
@@ -501,6 +502,7 @@ export class Match {
     const power = (9.0 + chargeRatio * 13.0) + (shooter.shotPower / 100) * 4.0;
     this.ball.kick(finalDirX * power, finalDirY * power, shooter);
     shooter.kickCooldown = 0.35;
+    sound.playKick();
 
     // Disparar animación de patada y golpeo enérgico
     shooter.facingX = finalDirX;
@@ -731,6 +733,9 @@ export class Match {
 
     // Activar celebración eufórica en todos los futbolistas del equipo anotador
     scoringTeam.players.forEach(p => p.celebrate(3.2));
+
+    // EMITIR SONIDO Y NARRACIÓN DE GOL (¡GOOOOOOL!) Y OVACIÓN DE LA HINCHADA
+    sound.playGoalCelebration();
 
     this.showBanner(`⚽ ¡GOOOOOOOOOOL! ⚽`, `${scoringTeam.name.toUpperCase()} • ${scorer.name} (${matchMinute}')`, 3.0, true);
   }
