@@ -11,29 +11,24 @@ export class PlayerAI {
   static update(player, ball, team, opponentTeam, pitchWidth, pitchHeight, difficulty = DIFFICULTY.NORMAL, executePassCb, executeShootCb) {
     if (player.position === 'GK') return;
 
-    let speedFactor = 0.82;
+    // Velocidades 1:1 basadas estrictamente en los atributos de velocidad del jugador
+    let speedFactor = 1.0;
     let shootChance = 0.04;
-    let pressDistance = 260;
+    let pressDistance = 280;
     let passChance = 0.025;
     let slideChance = 0.02;
     let shootRange = 290;
 
     if (difficulty === DIFFICULTY.EASY) {
-      // FÁCIL: Rival lento y pausado
-      speedFactor = 0.52;
-      shootChance = 0.008;
-      pressDistance = 140;
-      passChance = 0.01;
-      slideChance = 0;
-      shootRange = 210;
+      speedFactor = 0.85; // Ligera ventaja para el usuario
+      shootChance = 0.015;
+      pressDistance = 180;
+      passChance = 0.015;
     } else if (difficulty === DIFFICULTY.HARD) {
-      // DIFÍCIL: Rápido pero proporcionado al estadio
-      speedFactor = 1.05;
-      shootChance = 0.08;
+      speedFactor = 1.15; // Rival picante y competitivo
+      shootChance = 0.07;
       pressDistance = 420;
-      passChance = 0.045;
-      slideChance = 0.05;
-      shootRange = 340;
+      passChance = 0.04;
     }
 
     const hasBall = ball.owner === player;
@@ -72,9 +67,9 @@ export class PlayerAI {
         }
       }
 
-      // Conducir enfilando hacia el arco rival
+      // Conducir enfilando hacia el arco rival con la misma base que el usuario
       const dirToGoal = normalize(oppGoalX - player.x, oppGoalY - player.y);
-      const spd = (player.speed / 100) * 2.45 * speedFactor;
+      const spd = (player.speed / 100) * 2.55 * speedFactor;
       player.vx = dirToGoal.x * spd;
       player.vy = dirToGoal.y * spd;
       player.facingX = dirToGoal.x;
@@ -100,7 +95,8 @@ export class PlayerAI {
       const distFromHome = distance(player.homeX, player.homeY, ball.x, ball.y);
       if (distFromHome < pressDistance || player.position === 'FWD' || difficulty === DIFFICULTY.HARD) {
         const dir = normalize(ball.x - player.x, ball.y - player.y);
-        const spd = (player.speed / 100) * 2.65 * speedFactor;
+        // Cuando persigue el balón usa sprint proporcional idéntico al usuario
+        const spd = (player.speed / 100) * 2.85 * speedFactor;
         player.vx = dir.x * spd;
         player.vy = dir.y * spd;
         player.facingX = dir.x;
