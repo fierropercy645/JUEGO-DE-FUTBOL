@@ -20,14 +20,66 @@ export class LeagueScreen {
     const userMatch = this.league.getUserMatchForCurrentRound();
     const userTeam = this.league.teams.find(t => t.id === this.league.userTeamId);
 
+    const isChampion = this.league.completed && standings.length > 0 && standings[0].teamId === this.league.userTeamId;
+    const championTeam = standings.length > 0 ? this.league.teams.find(t => t.id === standings[0].teamId) : null;
+
     return `
-      <div class="screen" style="max-width: 1200px; margin: 0 auto; width: 100%;">
+      <div class="screen" style="max-width: 1200px; margin: 0 auto; width: 100%; position: relative;">
+        <!-- Modal / Celebración de Campeón de la Liga -->
+        ${isChampion ? `
+          <div class="champion-modal-overlay">
+            <div class="confetti-container">
+              ${Array.from({ length: 40 }).map((_, i) => `
+                <div class="confetti" style="
+                  left: ${Math.random() * 100}%;
+                  animation-delay: ${Math.random() * 2}s;
+                  background-color: ${['#ffd700', '#10b981', '#3b82f6', '#ef4444', '#ec4899', '#ffffff'][i % 6]};
+                "></div>
+              `).join('')}
+            </div>
+
+            <div class="champion-card">
+              <div class="trophy-glow-wrapper">
+                <div class="trophy-glow"></div>
+                <div class="trophy-emoji">🏆</div>
+              </div>
+
+              <div class="champion-badge">⭐ ¡¡¡SOMOS CAMPEONES!!! ⭐</div>
+              <h1 class="champion-title">¡¡GANAMOS, GANAMOS!!</h1>
+              <p class="champion-subtitle">
+                ¡Felicidades! <strong>${userTeam ? userTeam.name.toUpperCase() : 'TU CLUB'}</strong> se ha coronado como el Máximo Campeón de la <strong>${this.league.name}</strong>.
+              </p>
+
+              <div class="champion-stats-row">
+                <div class="champ-stat-box">
+                  <span class="champ-stat-val">${standings[0].pts}</span>
+                  <span class="champ-stat-lbl">PUNTOS</span>
+                </div>
+                <div class="champ-stat-box">
+                  <span class="champ-stat-val">${standings[0].pg}</span>
+                  <span class="champ-stat-lbl">VICTORIAS</span>
+                </div>
+                <div class="champ-stat-box">
+                  <span class="champ-stat-val">${standings[0].gf}</span>
+                  <span class="champ-stat-lbl">GOLES</span>
+                </div>
+              </div>
+
+              <div class="champion-actions">
+                <button id="btnCloseCelebration" class="btn btn-primary" style="padding: 16px 36px; font-size: 1rem; box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);">
+                  🎉 ¡VIVA EL CAMPEÓN! Ver Tabla
+                </button>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
         <div class="screen-header">
           <div>
             <div class="screen-title">${this.league.name}</div>
             <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">
               Tu club: <strong style="color: var(--accent-gold);">${userTeam ? userTeam.name : 'N/A'}</strong> • Jornada ${this.league.currentRound} de ${this.league.rounds.length}
-              ${this.league.completed ? ' • <span style="color: #10b981; font-weight: bold;">TEMPORADA FINALIZADA</span>' : ''}
+              ${this.league.completed ? (isChampion ? ' • <span style="color: #ffd700; font-weight: bold;">👑 ¡ERES EL CAMPEÓN! 🏆</span>' : ' • <span style="color: #10b981; font-weight: bold;">TEMPORADA FINALIZADA</span>') : ''}
             </div>
           </div>
           <div style="display: flex; gap: 12px;">
@@ -125,8 +177,8 @@ export class LeagueScreen {
                 </button>
               </div>
             ` : `
-              <div style="text-align: center; color: var(--accent-gold); font-weight: bold; padding: 16px;">
-                🏆 ¡La temporada ha concluido! Consulta al campeón en la tabla.
+              <div style="text-align: center; color: var(--accent-gold); font-weight: bold; padding: 16px; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--accent-gold); border-radius: 8px;">
+                ${isChampion ? '🏆 ¡ERES EL CAMPEÓN DE LA LIGA! Disfruta la gloria del título.' : `🏆 Temporada finalizada. Campeón: ${championTeam ? championTeam.name : 'N/A'}`}
               </div>
             `}
           </div>
@@ -141,6 +193,12 @@ export class LeagueScreen {
     const btnPlayMatch = container.querySelector('#btnPlayMatch');
     const btnSimulateRound = container.querySelector('#btnSimulateRound');
     const btnResetLeague = container.querySelector('#btnResetLeague');
+    const btnCloseCelebration = container.querySelector('#btnCloseCelebration');
+
+    btnCloseCelebration?.addEventListener('click', () => {
+      const modal = container.querySelector('.champion-modal-overlay');
+      if (modal) modal.style.display = 'none';
+    });
 
     const goHome = () => this.app.navigate('main-menu');
     btnBackToMenu?.addEventListener('click', goHome);
