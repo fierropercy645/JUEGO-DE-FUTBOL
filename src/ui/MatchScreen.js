@@ -57,9 +57,52 @@ export class MatchScreen {
           </button>
         </div>
 
-        <!-- Canvas -->
+        <!-- Canvas Wrapper -->
         <div class="canvas-wrapper">
           <canvas id="matchCanvas" width="${PITCH.WIDTH}" height="${PITCH.HEIGHT}"></canvas>
+
+          <!-- Capa de Controles Táctiles para Móviles / Celular -->
+          <div class="touch-controls-layer" id="touchControlsLayer">
+            <!-- Joystick Virtual (Izquierda) -->
+            <div class="touch-joystick-zone" id="touchJoystickZone">
+              <div class="joystick-base" id="joystickBase">
+                <div class="joystick-knob" id="joystickKnob"></div>
+              </div>
+            </div>
+
+            <!-- Botones de Acción (Derecha) -->
+            <div class="touch-actions-zone">
+              <div class="touch-actions-top-row">
+                <button type="button" class="touch-action-btn btn-action-switch" data-action="switchPlayer" title="Cambiar Jugador">
+                  <span class="btn-main-label">🔄</span>
+                  <span class="btn-sub-label">CAMBIAR</span>
+                </button>
+                <button type="button" class="touch-action-btn btn-action-dribble" data-action="dribble" title="Regate / Quiebre">
+                  <span class="btn-main-label">⚡</span>
+                  <span class="btn-sub-label">REGATE</span>
+                </button>
+                <button type="button" class="touch-action-btn btn-action-chip" data-action="chipShot" title="Vaselina">
+                  <span class="btn-main-label">🎯</span>
+                  <span class="btn-sub-label">VASELINA</span>
+                </button>
+              </div>
+
+              <div class="touch-actions-main-row">
+                <button type="button" class="touch-action-btn btn-action-slide" data-action="slideTackle" title="Barrida">
+                  <span class="btn-main-label">🦶</span>
+                  <span class="btn-sub-label">BARRIDA</span>
+                </button>
+                <button type="button" class="touch-action-btn btn-action-pass" data-action="pass" title="Pase">
+                  <span class="btn-main-label">A</span>
+                  <span class="btn-sub-label">PASE</span>
+                </button>
+                <button type="button" class="touch-action-btn btn-action-shoot" data-action="shoot" data-action-alt="steal" title="Disparo / Quitar">
+                  <span class="btn-main-label">B</span>
+                  <span class="btn-sub-label">TIRO/ROBO</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Controls Hint Bar -->
@@ -132,8 +175,111 @@ export class MatchScreen {
       this.match.selectPlayerAtCoordinates(clickX, clickY);
     });
 
+    // Setup Controles Táctiles (Joystick + Botones)
+    this.setupTouchControls(container);
+
     // Start game loop
     this.gameLoop.start();
+  }
+
+  setupTouchControls(container) {
+    const joystickZone = container.querySelector('#touchJoystickZone');
+    const joystickBase = container.querySelector('#joystickBase');
+    const joystickKnob = container.querySelector('#joystickKnob');
+
+    if (joystickZone && joystickBase && joystickKnob) {
+      let touchId = null;
+      let baseRect = null;
+      let centerX = 0;
+      let centerY = 0;
+      const maxRadius = 45;
+
+      const handleTouchStart = (e) => {
+        if (touchId !== null) return;
+        const touch = e.changedTouches[0];
+        touchId = touch.identifier;
+        baseRect = joystickBase.getBoundingClientRect();
+        centerX = baseRect.left + baseRect.width / 2;
+        centerY = baseRect.top + baseRect.height / 2;
+        updateKnob(touch.clientX, touch.clientY);
+        e.preventDefault();
+      };
+
+      const handleTouchMove = (e) => {
+        if (touchId === null) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const touch = e.changedTouches[i];
+          if (touch.identifier === touchId) {
+            updateKnob(touch.clientX, touch.clientY);
+            e.preventDefault();
+            break;
+          }
+        }
+      };
+
+      const handleTouchEnd = (e) => {
+        if (touchId === null) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) {
+            touchId = null;
+            joystickKnob.style.transform = `translate(0px, 0px)`;
+            this.controls.setTouchMovement(0, 0);
+            e.preventDefault();
+            break;
+          }
+        }
+      };
+
+      const updateKnob = (clientX, clientY) => {
+        const dx = clientX - centerX;
+        const dy = clientY - centerY;
+        const dist = Math.hypot(dx, dy);
+        const angle = Math.atan2(dy, dx);
+
+        const clampedDist = Math.min(dist, maxRadius);
+        const knobX = Math.cos(angle) * clampedDist;
+        const knobY = Math.sin(angle) * clampedDist;
+
+        joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+
+        // Normalizar de 0 a 1 para el movimiento
+        const normDist = clampedDist / maxRadius;
+        this.controls.setTouchMovement(Math.cos(angle) * normDist, Math.sin(angle) * normDist);
+      };
+
+      joystickZone.addEventListener('touchstart', handleTouchStart, { passive: false });
+      joystickZone.addEventListener('touchmove', handleTouchMove, { passive: false });
+      joystickZone.addEventListener('touchend', handleTouchEnd, { passive: false });
+      joystickZone.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+    }
+
+    // Botones de acción táctiles
+    const actionButtons = container.querySelectorAll('.touch-action-btn');
+    actionButtons.forEach(btn => {
+      const action = btn.dataset.action;
+      const altAction = btn.dataset.actionAlt;
+
+      const press = (e) => {
+        e.preventDefault();
+        btn.classList.add('active');
+        if (action) this.controls.setVirtualButton(action, true);
+        if (altAction) this.controls.setVirtualButton(altAction, true);
+      };
+
+      const release = (e) => {
+        e.preventDefault();
+        btn.classList.remove('active');
+        if (action) this.controls.setVirtualButton(action, false);
+        if (altAction) this.controls.setVirtualButton(altAction, false);
+      };
+
+      btn.addEventListener('touchstart', press, { passive: false });
+      btn.addEventListener('touchend', release, { passive: false });
+      btn.addEventListener('touchcancel', release, { passive: false });
+      btn.addEventListener('mousedown', press);
+      btn.addEventListener('mouseup', release);
+      btn.addEventListener('mouseleave', release);
+    });
   }
 
   togglePause(shouldPause) {
