@@ -322,18 +322,28 @@ export class Match {
       // Evaluación del Árbitro: ¿Fue barrida a destiempo? (Falta o Penal)
       const fieldLeft = PITCH.FIELD_MARGIN_X || 60;
       const fieldRight = PITCH.WIDTH - fieldLeft;
-      const isFoul = Math.random() < 0.40; // 40% de falta en barridas
+      const isFoul = Math.random() < 0.50; // 50% de probabilidad de falta en barridas
 
       if (isFoul) {
-        this.referee.blowWhistle(1.8);
+        sound.playWhistle();
+        const isRedCard = Math.random() < 0.20; // 20% roja directa, 80% amarilla
+        this.referee.blowWhistle(2.2, isRedCard ? 'red' : 'yellow');
+
+        // Acercar al árbitro al lugar de la infracción
+        this.referee.x = player.x + (player.facingX >= 0 ? -25 : 25);
+        this.referee.y = player.y - 15;
+
+        const cardText = isRedCard ? '🟥 TARJETA ROJA' : '🟨 TARJETA AMARILLA';
         const inPenaltyArea = player.isHome
           ? (tackledRival.x > fieldRight - PITCH.PENALTY_AREA_WIDTH)
           : (tackledRival.x < fieldLeft + PITCH.PENALTY_AREA_WIDTH);
 
         if (inPenaltyArea) {
           this.triggerPenaltyKick(player.isHome ? this.homeTeam : this.awayTeam, tackledRival);
+          this.showBanner(`${cardText} • ¡PENAL!`, `${player.name} cometió falta en el área`, 2.5);
         } else {
           this.triggerFreeKick(player.isHome ? this.homeTeam : this.awayTeam, tackledRival);
+          this.showBanner(`${cardText} • ¡FALTA!`, `${player.name} derribó a ${tackledRival.name}`, 2.2);
         }
         return;
       }
@@ -663,6 +673,39 @@ export class Match {
         this.stats.recordInterception(stealer.teamId);
       });
     });
+
+    // FALTAS Y BARRIDAS DEL RIVAL (IA comete faltas en disputas divididas)
+    if (this.state === GAME_STATES.PLAYING && this.ball.owner && this.ball.owner.isHome) {
+      const oppPlayers = this.awayTeam.players.filter(p => p.position !== 'GK');
+      for (const opp of oppPlayers) {
+        const d = distance(opp.x, opp.y, this.ball.owner.x, this.ball.owner.y);
+        // Si el rival llega a destiempo por detrás / costado a menos de 22px
+        if (d < 22 && Math.random() < 0.008) {
+          const userVictim = this.ball.owner;
+          userVictim.triggerStun(1.5);
+          sound.playWhistle();
+
+          const isRed = Math.random() < 0.18;
+          this.referee.blowWhistle(2.2, isRed ? 'red' : 'yellow');
+          this.referee.x = userVictim.x - 20;
+          this.referee.y = userVictim.y - 10;
+
+          const cardTxt = isRed ? '🟥 ROJA DIRECTA' : '🟨 TARJETA AMARILLA';
+          const fieldLeft = PITCH.FIELD_MARGIN_X || 60;
+          const fieldRight = PITCH.WIDTH - fieldLeft;
+          const inPenaltyArea = userVictim.x > fieldRight - PITCH.PENALTY_AREA_WIDTH;
+
+          if (inPenaltyArea) {
+            this.triggerPenaltyKick(this.homeTeam, userVictim);
+            this.showBanner(`${cardTxt} • ¡PENAL A FAVOR!`, `${opp.name} cometió penal sobre ${userVictim.name}`, 2.5);
+          } else {
+            this.triggerFreeKick(this.homeTeam, userVictim);
+            this.showBanner(`${cardTxt} • ¡FALTA RIVAL!`, `${opp.name} bajó a ${userVictim.name}`, 2.2);
+          }
+          break;
+        }
+      }
+    }
 
     // CAMBIO INMEDIATO AL JUGADOR QUE RECIBE EL BALÓN:
     // Si el balón llega a los pies de cualquiera de nuestros jugadores (pase, rebote, intercepción),

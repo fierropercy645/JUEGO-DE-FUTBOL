@@ -12,10 +12,12 @@ export class Referee {
     this.pitchHeight = pitchHeight;
     this.whistleTimer = 0;
     this.animTimer = 0;
+    this.cardColor = null; // 'yellow' o 'red'
   }
 
-  blowWhistle(duration = 1.5) {
+  blowWhistle(duration = 1.8, cardType = 'yellow') {
     this.whistleTimer = duration;
+    this.cardColor = cardType;
   }
 
   update(dt, ball) {
@@ -60,14 +62,35 @@ export class Referee {
     if (this.whistleTimer > 0) {
       ctx.fillStyle = '#ff0000';
       ctx.font = 'bold 9px monospace';
-      ctx.fillText('⚡ ¡PIIIIP! ⚡', px - 28, py - 26);
+      ctx.fillText('⚡ ¡PIIIIP! ⚡', px - 28, py - 32);
 
-      // Tarjeta en mano levantada
-      ctx.fillStyle = '#ffee00'; // Tarjeta amarilla
-      ctx.fillRect(px + (this.facingX >= 0 ? 8 : -14), py - 24, 7, 10);
+      // Tarjeta oficial levantada en alto por el árbitro
+      const cardX = px + (this.facingX >= 0 ? 10 : -18);
+      const cardY = py - 30;
+
+      // Brazo extendido hacia arriba sosteniendo la tarjeta
+      ctx.fillStyle = skinColor;
+      ctx.fillRect(px + (this.facingX >= 0 ? 6 : -8), py - 20, 3, 14);
+
+      // Tarjeta (Amarilla o Roja con resplandor)
+      const isRed = this.cardColor === 'red';
+      ctx.fillStyle = isRed ? '#ef4444' : '#facc15';
+      ctx.shadowColor = isRed ? 'rgba(239, 68, 68, 0.8)' : 'rgba(250, 204, 21, 0.8)';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(cardX, cardY, 8, 12, 1.5);
+      else ctx.rect(cardX, cardY, 8, 12);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 1;
-      ctx.strokeRect(px + (this.facingX >= 0 ? 8 : -14), py - 24, 7, 10);
+      ctx.stroke();
+
+      // Texto de sanción
+      ctx.fillStyle = isRed ? '#ef4444' : '#facc15';
+      ctx.font = 'bold 8px monospace';
+      ctx.fillText(isRed ? '🟥 ROJA' : '🟨 AMARILLA', px + (this.facingX >= 0 ? 32 : -36), py - 22);
     }
 
     // Cuerpo del Árbitro (Uniforme clásico Amarillo Flúor / Negro de la FIFA)
