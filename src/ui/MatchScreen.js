@@ -44,6 +44,10 @@ export class MatchScreen {
             00:00
           </div>
 
+          <!-- Píldora de eventos en el HUD (Fuera del Canvas, 100% despejado) -->
+          <div id="hudMatchEvent" style="display: none; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); border: 1.5px solid var(--accent-green); color: #10b981; letter-spacing: 0.5px;">
+          </div>
+
           <div style="font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); color: var(--accent-gold);">
             IA: ${this.match.difficulty.toUpperCase()}
           </div>
@@ -93,6 +97,7 @@ export class MatchScreen {
 
     this.hudScore = container.querySelector('#hudScore');
     this.hudTimer = container.querySelector('#hudTimer');
+    this.hudMatchEvent = container.querySelector('#hudMatchEvent');
     this.pauseModal = container.querySelector('#pauseModal');
 
     const btnPause = container.querySelector('#btnPauseMatch');
@@ -160,6 +165,25 @@ export class MatchScreen {
       if (this.hudTimer) {
         const min = this.match.getSimulatedMinute();
         this.hudTimer.textContent = `${min.toString().padStart(2, '0')}:00'`;
+      }
+
+      // Avisos deportivos limpios en la barra superior HUD (cero invasión a la cancha)
+      if (this.hudMatchEvent) {
+        if (this.match.notification) {
+          this.hudMatchEvent.textContent = `${this.match.notification.text} ${this.match.notification.subtitle ? '• ' + this.match.notification.subtitle : ''}`;
+          this.hudMatchEvent.style.display = 'block';
+          if (this.match.notification.isGoal) {
+            this.hudMatchEvent.style.color = '#ffd700';
+            this.hudMatchEvent.style.borderColor = '#ffd700';
+            this.hudMatchEvent.style.background = 'rgba(245, 158, 11, 0.25)';
+          } else {
+            this.hudMatchEvent.style.color = '#10b981';
+            this.hudMatchEvent.style.borderColor = '#10b981';
+            this.hudMatchEvent.style.background = 'rgba(16, 185, 129, 0.2)';
+          }
+        } else {
+          this.hudMatchEvent.style.display = 'none';
+        }
       }
 
       // Check match finish
