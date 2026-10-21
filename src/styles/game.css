@@ -1,0 +1,101 @@
+.match-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100vw;
+  height: 100vh;
+  padding: 10px 0 6px 0;
+  box-sizing: border-box;
+  background: #090e17;
+  font-family: var(--font-pixel);
+  overflow: hidden;
+}
+
+/* El HUD superior ahora está ARRIBA de la cancha como una barra deportiva fija y no tapa el césped */
+.match-hud {
+  position: static;
+  transform: none;
+  background: #111827;
+  border: 2px solid var(--border-color);
+  box-shadow: inset -2px -2px 0px 0px rgba(0,0,0,0.6), inset 2px 2px 0px 0px rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 6px 24px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  z-index: 10;
+}
+
+.hud-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+.hud-score {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+  background: #080c14;
+  padding: 4px 14px;
+  border: 2px solid var(--border-color);
+  letter-spacing: 2px;
+}
+
+.hud-timer {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+}
+
+.canvas-wrapper {
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  border: 4px solid #1f293d;
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#matchCanvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  max-height: 80vh;
+  max-width: 95vw;
+}
+
+/* La barra de ayuda inferior ahora está DEBAJO del estadio y no tapa las líneas de banda */
+.controls-hint-bar {
+  position: static;
+  transform: none;
+  background: #111827;
+  border: 2px solid var(--border-color);
+  padding: 6px 16px;
+  margin-top: 6px;
+  border-radius: 6px;
+  display: flex;
+  gap: 14px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  z-index: 10;
+}
+
+.controls-hint-bar kbd {
+  background: var(--bg-card);
+  color: #fff;
+  padding: 2px 5px;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  font-size: 0.65rem;
+}

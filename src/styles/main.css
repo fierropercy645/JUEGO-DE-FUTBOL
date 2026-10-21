@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  --bg-primary: #0b0f19;
+  --bg-surface: #141b2d;
+  --bg-card: #1f293d;
+  --bg-card-hover: #29354e;
+  --accent-green: #10b981;
+  --accent-green-hover: #059669;
+  --accent-gold: #f59e0b;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border-color: #2e384d;
+  --danger: #ef4444;
+  --font-pixel: 'Press Start 2P', monospace, sans-serif;
+  --font-family: 'Press Start 2P', -apple-system, BlinkMacSystemFont, monospace, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  image-rendering: pixelated;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Pixel style button */
+.btn {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border: 3px solid var(--border-color);
+  box-shadow: inset -2px -2px 0px 0px rgba(0, 0, 0, 0.4), inset 2px 2px 0px 0px rgba(255, 255, 255, 0.1);
+  padding: 12px 20px;
+  font-size: 0.75rem;
+  font-family: var(--font-pixel);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.btn:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--accent-green);
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: inset 2px 2px 0px 0px rgba(0, 0, 0, 0.6);
+}
+
+.btn-primary {
+  background-color: var(--accent-green);
+  color: #ffffff;
+  border-color: #047857;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-green-hover);
+  border-color: #10b981;
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  color: #ffffff;
+  border-color: #991b1b;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border-color: var(--border-color);
+}
+
+.card {
+  background-color: var(--bg-surface);
+  border: 3px solid var(--border-color);
+  box-shadow: inset -2px -2px 0px 0px rgba(0, 0, 0, 0.5), inset 2px 2px 0px 0px rgba(255, 255, 255, 0.05);
+  padding: 24px;
+}
