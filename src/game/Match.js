@@ -145,11 +145,12 @@ export class Match {
     }
   }
 
-  showBanner(title, subtitle = '', duration = 2.0) {
+  showBanner(title, subtitle = '', duration = 2.0, isGoal = false) {
     this.notification = {
       text: title,
       subtitle: subtitle,
       timer: duration,
+      isGoal: isGoal,
     };
   }
 
@@ -715,12 +716,12 @@ export class Match {
 
   triggerGoal(scoringSide) {
     this.state = GAME_STATES.GOAL;
-    this.stateTimer = 2.5;
+    this.stateTimer = 3.2; // Tiempo suficiente para disfrutar el gol y la celebración
     this.lastScoringTeam = scoringSide;
 
     // SACUDIDA ESPECTACULAR DE LA RED (Ondulación elástica y vibración al inflarse la red)
     const goalNetSide = scoringSide === 'home' ? 'right' : 'left';
-    this.pitch.triggerNetShake(goalNetSide, 1.5);
+    this.pitch.triggerNetShake(goalNetSide, 2.0);
 
     const scoringTeam = scoringSide === 'home' ? this.homeTeam : this.awayTeam;
     const scorer = this.ball.lastTouchedPlayer || scoringTeam.players[3];
@@ -729,9 +730,9 @@ export class Match {
     this.stats.recordGoal(scoringTeam.id, scorer.name, matchMinute);
 
     // Activar celebración eufórica en todos los futbolistas del equipo anotador
-    scoringTeam.players.forEach(p => p.celebrate(2.5));
+    scoringTeam.players.forEach(p => p.celebrate(3.2));
 
-    this.showBanner(`¡GOLAZOOOO DE ${scoringTeam.name.toUpperCase()}!`, `${scorer.name} infla las redes (${matchMinute}')`, 2.5);
+    this.showBanner(`⚽ ¡GOOOOOOOOOOL! ⚽`, `${scoringTeam.name.toUpperCase()} • ${scorer.name} (${matchMinute}')`, 3.0, true);
   }
 
   finishMatch() {
@@ -803,22 +804,78 @@ export class Match {
 
     if (this.notification) {
       ctx.save();
-      ctx.fillStyle = 'rgba(11, 15, 25, 0.9)';
-      ctx.fillRect(0, PITCH.HEIGHT / 2 - 50, PITCH.WIDTH, 100);
+      const isGoal = this.notification.isGoal;
 
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(0, PITCH.HEIGHT / 2 - 50, PITCH.WIDTH, 100);
+      if (isGoal) {
+        // CARTEL DE GOL ESTILO TRANSMISIÓN DE TV EN LA PARTE SUPERIOR (NO TAPA LA CANCHA NI LOS ARCOS)
+        const bannerW = 680;
+        const bannerH = 76;
+        const bannerX = (PITCH.WIDTH - bannerW) / 2;
+        const bannerY = 22; // Arriba de la cancha
 
-      ctx.fillStyle = '#ffd700';
-      ctx.font = 'bold 22px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(this.notification.text, PITCH.WIDTH / 2, PITCH.HEIGHT / 2 - 8);
+        // Resplandor dorado / neón
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
+        ctx.shadowBlur = 18;
 
-      if (this.notification.subtitle) {
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '14px monospace';
-        ctx.fillText(this.notification.subtitle, PITCH.WIDTH / 2, PITCH.HEIGHT / 2 + 25);
+        // Fondo con gradiente elegante
+        const bgGrad = ctx.createLinearGradient(bannerX, bannerY, bannerX + bannerW, bannerY + bannerH);
+        bgGrad.addColorStop(0, 'rgba(15, 23, 42, 0.95)');
+        bgGrad.addColorStop(0.5, 'rgba(30, 41, 59, 0.98)');
+        bgGrad.addColorStop(1, 'rgba(15, 23, 42, 0.95)');
+        ctx.fillStyle = bgGrad;
+
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 10);
+        else ctx.rect(bannerX, bannerY, bannerW, bannerH);
+        ctx.fill();
+
+        // Borde dorado deportivo
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Texto animado de Gol
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.notification.text, PITCH.WIDTH / 2, bannerY + 26);
+
+        // Subtítulo con el autor del gol y minuto
+        if (this.notification.subtitle) {
+          ctx.fillStyle = '#f8fafc';
+          ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+          ctx.fillText(this.notification.subtitle, PITCH.WIDTH / 2, bannerY + 54);
+        }
+      } else {
+        // Avisos normales en la parte superior sin tapar la jugada
+        const bannerW = 540;
+        const bannerH = 50;
+        const bannerX = (PITCH.WIDTH - bannerW) / 2;
+        const bannerY = 20;
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 8);
+        else ctx.rect(bannerX, bannerY, bannerW, bannerH);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 15px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.notification.text, PITCH.WIDTH / 2, bannerY + (this.notification.subtitle ? 18 : 25));
+
+        if (this.notification.subtitle) {
+          ctx.fillStyle = '#cbd5e1';
+          ctx.font = '12px system-ui, sans-serif';
+          ctx.fillText(this.notification.subtitle, PITCH.WIDTH / 2, bannerY + 36);
+        }
       }
       ctx.restore();
     }
