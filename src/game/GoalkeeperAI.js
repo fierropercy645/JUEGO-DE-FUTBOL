@@ -62,15 +62,15 @@ export class GoalkeeperAI {
     const clampedBallY = Math.max(minY, Math.min(maxY, ball.y));
     const targetY = (Math.abs(clampedBallY - gk.y) > 16) ? clampedBallY : gk.y;
 
-    // El arquero se mantiene en su línea de gol; solo achica moderadamente si el balón entra a su área chica
+    // El arquero cubre activamente la trayectoria del balón y achica con inteligencia
     let targetX = goalX;
     const distToBall = distance(gk.x, gk.y, ball.x, ball.y);
     const inPenaltyZone = isHome
-      ? (ball.x > fieldLeft && ball.x < fieldLeft + 120)
-      : (ball.x < fieldRight && ball.x > fieldRight - 120);
+      ? (ball.x > fieldLeft && ball.x < fieldLeft + 160)
+      : (ball.x < fieldRight && ball.x > fieldRight - 160);
 
-    if (inPenaltyZone && distToBall < 70 && !ball.owner) {
-      targetX = isHome ? goalX + 25 : goalX - 25;
+    if (inPenaltyZone && distToBall < 110 && !ball.owner) {
+      targetX = isHome ? goalX + 35 : goalX - 35;
     }
 
     const dir = normalize(targetX - gk.x, targetY - gk.y);
@@ -79,16 +79,16 @@ export class GoalkeeperAI {
     // ACTIVACIÓN DE VUELO / ESTIRADA / DIVE:
     // Si el balón viene disparado con velocidad hacia el arco
     const ballSpeed = Math.hypot(ball.vx, ball.vy);
-    const isHeadingToGK = isHome ? ball.vx < -4.0 : ball.vx > 4.0;
-    if (isHeadingToGK && distToBall < 130 && !gk.isDiving) {
+    const isHeadingToGK = isHome ? ball.vx < -2.5 : ball.vx > 2.5;
+    if (isHeadingToGK && distToBall < 160 && !gk.isDiving) {
       const diffY = ball.y - gk.y;
-      if (Math.abs(diffY) > 18) {
-        gk.triggerDive(diffY > 0 ? 1 : -1, 0.60);
+      if (Math.abs(diffY) > 12) {
+        gk.triggerDive(diffY > 0 ? 1 : -1, 0.65);
       }
     }
 
-    if (moveDist > 12) {
-      const spd = (gk.speed / 100) * 2.8 * speedFactor;
+    if (moveDist > 6) {
+      const spd = (gk.speed / 100) * 3.1 * speedFactor;
       gk.vx = dir.x * spd;
       gk.vy = dir.y * spd;
       gk.facingX = isHome ? 1 : -1;

@@ -100,27 +100,22 @@ export class CollisionSystem {
     const dy = ball.y - gk.y;
     const dist = Math.hypot(dx, dy);
     
-    // Alcance generoso de los brazos y estirada del arquero
-    let saveRadius = gk.radius + ball.radius + 20;
-    let saveProbability = 0.88;
+    // Alcance generoso y cobertura del arco
+    let saveRadius = gk.radius + ball.radius + 24;
+    let saveProbability = 0.92;
 
     if (difficulty === 'facil') {
-      saveRadius = gk.radius + ball.radius + 12;
-      saveProbability = 0.70; // Ataja con solvencia para que no pasen tiros tontos
+      saveRadius = gk.radius + ball.radius + 16;
+      saveProbability = 0.78; // Tapa tiros comunes y ataja con dignidad
     } else if (difficulty === 'dificil') {
-      saveRadius = gk.radius + ball.radius + 26;
-      saveProbability = 0.95;
+      saveRadius = gk.radius + ball.radius + 32;
+      saveProbability = 0.96; // En difícil el arquero es un muro pero batible con buenas jugadas
     }
 
-    // Tiros supersónicos con comba
+    // Tiros lejanos o colocados
     const ballSpeed = Math.hypot(ball.vx, ball.vy);
-    if (ballSpeed > 18.0) {
-      saveProbability *= 0.80; // Cañonazos extremos a quemarropa
-    }
-
     if (dist < saveRadius && !ball.owner) {
-      // Si el balón viene con trayectoria hacia el área o el arco
-      if (ballSpeed > 0.4 || dist < gk.radius + ball.radius + 6) {
+      if (ballSpeed > 0.3 || dist < gk.radius + ball.radius + 8) {
         if (Math.random() < saveProbability) {
           // Atrapa el balón con seguridad y lo retiene en sus manos
           ball.setOwner(gk);
@@ -133,8 +128,8 @@ export class CollisionSystem {
           // Desvío providencial al tiro de esquina o lateral
           ball.vx = -ball.vx * 0.45;
           ball.vy = (Math.random() - 0.5) * 7.0;
-          gk.kickCooldown = 0.4;
-          gk.triggerDive(dy > 0 ? 1 : -1, 0.5);
+          gk.kickCooldown = 0.35;
+          gk.triggerDive(dy > 0 ? 1 : -1, 0.55);
         }
       }
     }

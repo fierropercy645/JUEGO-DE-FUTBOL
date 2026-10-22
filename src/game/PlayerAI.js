@@ -11,24 +11,20 @@ export class PlayerAI {
   static update(player, ball, team, opponentTeam, pitchWidth, pitchHeight, difficulty = DIFFICULTY.NORMAL, executePassCb, executeShootCb) {
     if (player.position === 'GK') return;
 
-    // Velocidades 1:1 basadas estrictamente en los atributos de velocidad del jugador
+    // Velocidades 1:1 basadas estrictamente en los atributos del jugador (cero trampas de velocidad)
     let speedFactor = 1.0;
-    let shootChance = 0.04;
-    let pressDistance = 280;
-    let passChance = 0.025;
-    let slideChance = 0.02;
-    let shootRange = 290;
+    let shootChance = 0.045;
+    let passChance = 0.04;
+    let shootRange = 260;
 
     if (difficulty === DIFFICULTY.EASY) {
-      speedFactor = 0.85; // Ligera ventaja para el usuario
-      shootChance = 0.015;
-      pressDistance = 180;
-      passChance = 0.015;
+      speedFactor = 0.88;
+      shootChance = 0.025;
+      passChance = 0.025;
     } else if (difficulty === DIFFICULTY.HARD) {
-      speedFactor = 1.15; // Rival picante y competitivo
-      shootChance = 0.07;
-      pressDistance = 420;
-      passChance = 0.04;
+      speedFactor = 1.05; // Ajuste parejo y realista, sin correr desenfrenadamente
+      shootChance = 0.06;
+      passChance = 0.055;
     }
 
     const hasBall = ball.owner === player;
@@ -77,23 +73,29 @@ export class PlayerAI {
       return;
     }
 
-    // 2. BUSCAR AL DEFENSOR MÁS CERCANO (O MÚLTIPLES EN DIFÍCIL)
+    // 2. ASIGNACIÓN TÁCTICA DEFENSIVA PROFESIONAL (CERO EFECTO ENJAMBRE / MONTÓN)
+    // Solo UN jugador asignado presiona directamente al poseedor del balón.
+    // Los demás defienden sus zonas, cierran líneas de pase o marcan a los receptores.
     const outfieldTeammates = team.players.filter(p => p.position !== 'GK');
-    let closestToBall = outfieldTeammates[0];
+    let singlePresser = outfieldTeammates[0];
     let minBallDist = Infinity;
     outfieldTeammates.forEach(p => {
       const d = distance(p.x, p.y, ball.x, ball.y);
       if (d < minBallDist) {
         minBallDist = d;
-        closestToBall = p;
+        singlePresser = p;
       }
     });
 
-    const isDesignatedPresser = (closestToBall === player) || (difficulty === DIFFICULTY.HARD && minBallDist < 250);
+    const isDesignatedPresser = (singlePresser === player);
 
+    // Solo el jugador asignado va activamente a presionar si el rival tiene el balón
     if (isDesignatedPresser && !teamHasBall) {
       const distFromHome = distance(player.homeX, player.homeY, ball.x, ball.y);
-      if (distFromHome < pressDistance || player.position === 'FWD' || difficulty === DIFFICULTY.HARD) {
+      // El defensor no abandona su retaguardia si el balón está lejos; el medio o delantero presiona
+      const maxAllowedPursuit = player.position === 'DEF' ? 190 : 340;
+
+      if (distFromHome < maxAllowedPursuit) {
         let dir = normalize(ball.x - player.x, ball.y - player.y);
 
         // Desvío anticolisión: Si hay un compañero muy pegado en la misma trayectoria, rodearlo
@@ -108,8 +110,8 @@ export class PlayerAI {
           };
         }
 
-        // Cuando persigue el balón usa sprint proporcional idéntico al usuario
-        const spd = (player.speed / 100) * 2.85 * speedFactor;
+        // Trote o carrera controlada para disputar sin regalarse
+        const spd = (player.speed / 100) * 2.5 * speedFactor;
         player.vx = dir.x * spd;
         player.vy = dir.y * spd;
         player.facingX = dir.x;
@@ -118,16 +120,18 @@ export class PlayerAI {
       }
     }
 
-    // 3. MOVIMIENTO TÁCTICO COLECTIVO CON HISTÉRESIS (EVITA TEMBLORES)
+    // 3. MOVIMIENTO TÁCTICO COLECTIVO EQUILIBRADO (MANTENER LA LÍNEA Y ESTRUCTURA)
+    // Los defensas se quedan cubriendo su arco, los medios distribuyen y los delanteros buscan el espacio
     let targetX = player.homeX;
     let targetY = player.homeY;
 
-    // Reducir la oscilación por movimiento continuo del balón
-    const ballOffsetFactorY = player.position === 'DEF' ? 0.20 : 0.35;
+    // Escalonamiento defensivo vertical según la altura del balón
+    const ballOffsetFactorY = player.position === 'DEF' ? 0.22 : 0.35;
     const shiftY = (ball.y - pitchHeight / 2) * ballOffsetFactorY;
     targetY = player.homeY + shiftY;
 
     if (teamHasBall) {
+      // EN ATAQUE: Abrir la cancha y adelantar líneas
       if (player.position === 'DEF') {
         targetX = player.isHome ? player.homeX + 70 : player.homeX - 70;
       } else if (player.position === 'MID') {
@@ -136,10 +140,12 @@ export class PlayerAI {
         targetX = player.isHome ? Math.min(fieldRight - 60, player.homeX + 130) : Math.max(fieldLeft + 60, player.homeX - 130);
       }
     } else {
+      // EN DEFENSA: Mantener la muralla firme cubriendo la portería propia
       if (player.position === 'DEF') {
-        targetX = player.isHome ? Math.max(fieldLeft + 50, player.homeX - 30) : Math.min(fieldRight - 50, player.homeX + 30);
+        // El defensa NUNCA sale a lo loco; se queda protegiendo el área penal
+        targetX = player.isHome ? Math.max(fieldLeft + 45, player.homeX - 15) : Math.min(fieldRight - 45, player.homeX + 15);
       } else if (player.position === 'MID') {
-        targetX = player.isHome ? player.homeX - 50 : player.homeX + 50;
+        targetX = player.isHome ? player.homeX - 30 : player.homeX + 30;
       } else if (player.position === 'FWD') {
         targetX = player.homeX;
       }
