@@ -699,6 +699,7 @@ export class Match {
     });
 
     // FALTAS Y BARRIDAS DEL RIVAL (IA comete faltas en disputas divididas)
+    // Idempotencia: Solo evaluar si el partido está en juego activo (PLAYING)
     if (this.state === GAME_STATES.PLAYING && this.ball.owner && this.ball.owner.isHome) {
       const oppPlayers = this.awayTeam.players.filter(p => p.position !== 'GK');
       for (const opp of oppPlayers) {
@@ -726,7 +727,7 @@ export class Match {
             this.triggerFreeKick(this.homeTeam, userVictim);
             this.showBanner(`${cardTxt} • ¡FALTA RIVAL!`, `${opp.name} bajó a ${userVictim.name}`, 2.2);
           }
-          break;
+          return; // Detener evaluación inmediata en este fotograma
         }
       }
     }
@@ -761,25 +762,30 @@ export class Match {
     }
 
     // Detección de paradas y recepción del arquero con dificultad real
-    CollisionSystem.checkGoalkeeperSave(homeGK, this.ball, () => {
-      this.stats.recordSave(this.homeTeam.id);
-      this.showBanner('¡ATAJADÓN!', `${homeGK.name} salva el gol`, 1.2);
-    }, this.difficulty);
-    CollisionSystem.checkGoalkeeperSave(awayGK, this.ball, () => {
-      this.stats.recordSave(this.awayTeam.id);
-      this.showBanner('¡PARADÓN DEL ARQUERO!', `${awayGK.name} tapa el remate`, 1.2);
-    }, this.difficulty);
-
-    const goalResult = MatchRules.checkGoal(this.ball, PITCH.WIDTH, PITCH.HEIGHT, PITCH.GOAL_WIDTH);
-    if (goalResult && this.state === GAME_STATES.PLAYING) {
-      this.triggerGoal(goalResult);
-      return;
+    // Solo si el balón está libre sin dueño
+    if (this.state === GAME_STATES.PLAYING && !this.ball.owner) {
+      CollisionSystem.checkGoalkeeperSave(homeGK, this.ball, () => {
+        this.stats.recordSave(this.homeTeam.id);
+        this.showBanner('¡ATAJADÓN!', `${homeGK.name} salva el gol`, 1.2);
+      }, this.difficulty);
+      CollisionSystem.checkGoalkeeperSave(awayGK, this.ball, () => {
+        this.stats.recordSave(this.awayTeam.id);
+        this.showBanner('¡PARADÓN DEL ARQUERO!', `${awayGK.name} tapa el remate`, 1.2);
+      }, this.difficulty);
     }
 
-    if (this.state === GAME_STATES.PLAYING && !goalResult) {
+    // REGLAS DEL PARTIDO: Gol y Salidas (Solo se ejecutan si el partido está en juego activo PLAYING)
+    if (this.state === GAME_STATES.PLAYING) {
+      const goalResult = MatchRules.checkGoal(this.ball, PITCH.WIDTH, PITCH.HEIGHT, PITCH.GOAL_WIDTH);
+      if (goalResult) {
+        this.triggerGoal(goalResult);
+        return;
+      }
+
       const outEvent = MatchRules.checkOutOfBounds(this.ball, PITCH.WIDTH, PITCH.HEIGHT, PITCH.GOAL_WIDTH);
       if (outEvent) {
         this.setupRestart(outEvent);
+        return;
       }
     }
   }

@@ -30,4 +30,29 @@ describe('Match Physics and Rules', () => {
     const goal = MatchRules.checkGoal(ball, PITCH.WIDTH, PITCH.HEIGHT, PITCH.GOAL_WIDTH);
     expect(goal).toBeNull();
   });
+
+  it('detects throw-in when ball crosses top touchline', () => {
+    const ball = new Ball(PITCH.WIDTH / 2, 0);
+    const outEvent = MatchRules.checkOutOfBounds(ball, PITCH.WIDTH, PITCH.HEIGHT, PITCH.GOAL_WIDTH);
+    expect(outEvent).not.toBeNull();
+    expect(outEvent.type).toBe('SAQUE_DE_BANDA');
+  });
+
+  it('detects corner kick when defending player touches ball over endline', () => {
+    const ball = new Ball(fieldRight + 10, 50);
+    ball.lastTouchedPlayer = { isHome: false }; // defensor visitante desvía
+    const outEvent = MatchRules.checkOutOfBounds(ball, PITCH.WIDTH, PITCH.HEIGHT, PITCH.GOAL_WIDTH);
+    expect(outEvent).not.toBeNull();
+    expect(outEvent.type).toBe('TIRO_DE_ESQUINA');
+    expect(outEvent.awardedSide).toBe('home');
+  });
+
+  it('detects goal kick when attacking player touches ball over endline', () => {
+    const ball = new Ball(fieldRight + 10, 50);
+    ball.lastTouchedPlayer = { isHome: true }; // atacante local dispara desviado
+    const outEvent = MatchRules.checkOutOfBounds(ball, PITCH.WIDTH, PITCH.HEIGHT, PITCH.GOAL_WIDTH);
+    expect(outEvent).not.toBeNull();
+    expect(outEvent.type).toBe('SAQUE_DE_META');
+    expect(outEvent.awardedSide).toBe('away');
+  });
 });
