@@ -154,29 +154,33 @@ export class PlayerAI {
     let targetX = player.homeX;
     let targetY = player.homeY;
 
-    // Basculación continua con la altura del balón para cerrar líneas
-    const shiftY = (ball.y - pitchHeight / 2) * 0.55;
+    // Basculación continua con la altura del balón para cerrar líneas dentro del campo
+    const shiftY = (ball.y - pitchHeight / 2) * 0.45;
     targetY = player.homeY + shiftY;
 
     if (teamHasBall) {
       // EN ATAQUE: Desmarcarse y adelantar
       if (player.position === 'DEF') {
-        targetX = player.isHome ? player.homeX + 80 : player.homeX - 80;
+        targetX = player.isHome ? player.homeX + 70 : player.homeX - 70;
       } else if (player.position === 'MID') {
-        targetX = player.isHome ? player.homeX + 130 : player.homeX - 130;
+        targetX = player.isHome ? player.homeX + 110 : player.homeX - 110;
       } else if (player.position === 'FWD') {
-        targetX = player.isHome ? Math.min(fieldRight - 50, player.homeX + 150) : Math.max(fieldLeft + 50, player.homeX - 150);
+        targetX = player.isHome ? Math.min(fieldRight - 70, player.homeX + 130) : Math.max(fieldLeft + 70, player.homeX - 130);
       }
     } else {
-      // EN DEFENSA: Mantener la formación sin adelantar ni amontonarse
+      // EN DEFENSA: Mantener la formación sin adelantar ni amontonarse dentro del campo
       if (player.position === 'DEF') {
-        targetX = player.isHome ? fieldLeft + 75 : fieldRight - 75;
+        targetX = player.isHome ? fieldLeft + 90 : fieldRight - 90;
       } else if (player.position === 'MID') {
         targetX = player.isHome ? player.homeX - 25 : player.homeX + 25;
       } else if (player.position === 'FWD') {
         targetX = player.homeX;
       }
     }
+
+    // Asegurar que el objetivo táctico nunca esté fuera de la cancha
+    targetX = Math.max(fieldLeft + 30, Math.min(fieldRight - 30, targetX));
+    targetY = Math.max(30, Math.min(pitchHeight - 30, targetY));
 
     const distToTarget = distance(player.x, player.y, targetX, targetY);
     if (distToTarget > 16) {

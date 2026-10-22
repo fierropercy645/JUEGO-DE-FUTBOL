@@ -194,8 +194,18 @@ export class Player {
     this.x += this.vx * dt * 60;
     this.y += this.vy * dt * 60;
 
-    this.x = clamp(this.x, this.radius + 6, pitchWidth - this.radius - 6);
-    this.y = clamp(this.y, this.radius + 6, pitchHeight - this.radius - 6);
+    // LÍMITES ESTRICTOS DE LA CANCHA SEGÚN EL REGLAMENTO:
+    // Los jugadores de campo no pueden salir del rectángulo de juego (líneas de banda y fondo).
+    // El arquero (GK) tiene permiso de estar en su línea de gol/arco.
+    const fieldLeft = 60;
+    const fieldRight = pitchWidth - 60;
+    const minFieldX = this.position === 'GK' ? (fieldLeft - 18) : (fieldLeft + this.radius);
+    const maxFieldX = this.position === 'GK' ? (fieldRight + 18) : (fieldRight - this.radius);
+    const minFieldY = 8 + this.radius;
+    const maxFieldY = pitchHeight - 8 - this.radius;
+
+    this.x = clamp(this.x, minFieldX, maxFieldX);
+    this.y = clamp(this.y, minFieldY, maxFieldY);
 
     // Amortiguación suave y natural
     this.vx *= Math.pow(0.85, dt * 60);

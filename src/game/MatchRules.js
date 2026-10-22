@@ -38,8 +38,8 @@ export class MatchRules {
     const goalBottom = (pitchHeight + goalWidth) / 2;
 
     // 1. REGLA 15: SAQUE DE BANDA (Línea lateral superior y lateral inferior)
-    // El balón sale completamente del rectángulo de juego por las bandas
-    if (ball.y - ball.radius <= 4) {
+    // El balón sale de las líneas de cal superior (y <= 8) o inferior (y >= pitchHeight - 8)
+    if (ball.y - ball.radius <= 8) {
       return {
         type: GAME_STATES.THROW_IN,
         x: Math.max(fieldLeft + 25, Math.min(fieldRight - 25, ball.x)),
@@ -47,7 +47,7 @@ export class MatchRules {
         awardedTeam: ball.lastTouchedTeamId,
       };
     }
-    if (ball.y + ball.radius >= pitchHeight - 4) {
+    if (ball.y + ball.radius >= pitchHeight - 8) {
       return {
         type: GAME_STATES.THROW_IN,
         x: Math.max(fieldLeft + 25, Math.min(fieldRight - 25, ball.x)),
