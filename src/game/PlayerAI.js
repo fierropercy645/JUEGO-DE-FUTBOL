@@ -3,21 +3,10 @@ import { DIFFICULTY, PITCH } from '../utils/constants.js';
 
 export class PlayerAI {
   /**
-   * IA Táctica Avanzada con Desmarques, Pases Filtrados y Defensa Zonal Inteligente:
-   * - FÁCIL: Menor velocidad de reacción, tiros suaves y marcas con mayor margen de error.
-   * - NORMAL: Fútbol equilibrado, presión moderada, desmarques fluidos y tiros bien calculados.
-   * - DIFÍCIL: Marcaje asfixiante, anticipación, repliegue ordenado, desmarques de ruptura y remates demoledores.
-   *
-   * @param {Player} player - Jugador evaluado
-   * @param {Ball} ball - Balón del partido
-   * @param {Team} team - Equipo del jugador
-   * @param {Team} opponentTeam - Equipo rival
-   * @param {number} pitchWidth - Ancho del campo
-   * @param {number} pitchHeight - Alto del campo
-   * @param {string} difficulty - Nivel de dificultad
-   * @param {Function} executePassCb - Callback de pase
-   * @param {Function} executeShootCb - Callback de tiro
-   * @param {Object} [matchContext] - Contexto de partido { scoreDiff, isLateGame, timeRatio }
+   * IA Táctica Inteligente:
+   * - Decisiones orgánicas de pase, tiro, desmarque y repliegue basadas en visión periférica y presión rival.
+   * - Lectura de carriles libres para evitar conducciones mecánicas o robos predecibles.
+   * - Temporización de remates según ángulo y distancia a portería.
    */
   static update(
     player,
@@ -33,33 +22,36 @@ export class PlayerAI {
   ) {
     if (player.position === 'GK') return;
 
-    // Velocidades 1:1 basadas estrictamente en los atributos del jugador en TODOS los modos
     let speedFactor = 1.0;
-    let shootChance = 0.05;
-    let passChance = 0.065;
-    let shootRange = 260;
+    let shootChance = 0.055;
+    let passChance = 0.075;
+    let shootRange = 270;
+    let tackleUrgency = 0.008;
 
     if (difficulty === DIFFICULTY.EASY) {
       speedFactor = 0.95;
       shootChance = 0.035;
-      passChance = 0.045;
+      passChance = 0.05;
+      shootRange = 230;
+      tackleUrgency = 0.004;
     } else if (difficulty === DIFFICULTY.HARD) {
       speedFactor = 1.05;
-      shootChance = 0.075;
-      passChance = 0.085;
+      shootChance = 0.085;
+      passChance = 0.095;
+      shootRange = 290;
+      tackleUrgency = 0.015;
     }
 
-    // Adaptación táctica contextual por marcador y minutos restantes
     const scoreDiff = matchContext.scoreDiff || 0; // > 0 ganando, < 0 perdiendo
     const isLateGame = !!matchContext.isLateGame;
 
     if (scoreDiff < 0 && isLateGame) {
-      // Necesidad imperiosa de empatar/remontar: mayor agresividad ofensiva
-      shootChance += 0.03;
-      passChance += 0.02;
+      shootChance += 0.035;
+      passChance += 0.025;
+      shootRange += 30;
     } else if (scoreDiff > 0 && isLateGame) {
-      // Protegiendo el resultado: pases más conservadores, tiros con mayor seguridad
       shootRange = 220;
+      passChance += 0.02; // Priorizar posesión
     }
 
     const hasBall = ball.owner === player;
@@ -70,26 +62,36 @@ export class PlayerAI {
     const oppGoalX = player.isHome ? fieldRight : fieldLeft;
     const oppGoalY = pitchHeight / 2;
 
-    // 1. SI ESTE JUGADOR TIENE EL BALÓN (TOMA DE DECISIONES OFENSIVA):
+    // 1. SI ESTE JUGADOR TIENE EL BALÓN (TOMA DE DECISIÓN OFENSIVA CON CRITERIO):
     if (hasBall) {
       const distToGoal = distance(player.x, player.y, oppGoalX, oppGoalY);
 
-      // Decisión de disparo inteligente de la IA si está en zona de ataque
+      // Evaluación de presión rival inmediata sobre el poseedor
+      const nearestRival = opponentTeam.players
+        .filter(opp => opp.position !== 'GK')
+        .reduce((closest, opp) => {
+          const d = distance(player.x, player.y, opp.x, opp.y);
+          return d < closest.dist ? { player: opp, dist: d } : closest;
+        }, { player: null, dist: Infinity });
+
+      const isUnderHeavyPressure = nearestRival.dist < 42;
+
+      // DISPARO A PUERTA:
+      // Si está en rango y tiene ángulo limpio hacia los tres palos
       if (distToGoal < shootRange) {
-        if (Math.random() < shootChance) {
+        const goalAngle = Math.abs(oppGoalY - player.y) / Math.max(1, Math.abs(oppGoalX - player.x));
+        const hasGoodAngle = goalAngle < 1.1; // No patear desde el córner sin ángulo
+
+        if (hasGoodAngle && (Math.random() < shootChance || (distToGoal < 155 && Math.random() < 0.22))) {
           executeShootCb(player);
           return;
         }
       }
 
-      // Si está mano a mano muy cerca del arco (< 150px), disparar con alta contundencia
-      if (distToGoal < 150 && Math.random() < 0.16) {
-        executeShootCb(player);
-        return;
-      }
-
-      // Pase asociativo inteligente: buscar compañeros desmarcados o picando al espacio
-      if (Math.random() < passChance) {
+      // PASE INTELIGENTE:
+      // Si un rival presiona fuertemente o si detecta un compañero en posición superior
+      const shouldLookForPass = isUnderHeavyPressure || Math.random() < passChance;
+      if (shouldLookForPass) {
         const mates = team.players.filter(p => p !== player && p.position !== 'GK');
         let bestMate = null;
         let bestScore = -Infinity;
@@ -97,29 +99,41 @@ export class PlayerAI {
         mates.forEach(m => {
           const advance = player.isHome ? (m.x - player.x) : (player.x - m.x);
           const distToM = distance(player.x, player.y, m.x, m.y);
-          if (distToM < 25) return; // Muy encima
+          if (distToM < 26) return; // Muy pegado
 
-          // Comprobar si hay un rival marcándolo de cerca
-          const oppNearMate = opponentTeam.players.some(opp => distance(opp.x, opp.y, m.x, m.y) < 36);
+          // Medir si el compañero está libre de marca
+          const oppNearMate = opponentTeam.players.some(opp => distance(opp.x, opp.y, m.x, m.y) < 38);
 
-          // Ponderar desmarque hacia adelante y línea despejada
-          let score = advance * 1.5 - (oppNearMate ? 60 : 0) - (distToM / 8);
-          if (m.position === 'FWD') score += 25; // Priorizar alimentar al delantero
+          // Verificar si hay un oponente entre la línea de pase
+          const isInterceptionRisk = opponentTeam.players.some(opp => {
+            const d1 = distance(player.x, player.y, opp.x, opp.y);
+            const d2 = distance(opp.x, opp.y, m.x, m.y);
+            return (d1 + d2) < (distToM + 22);
+          });
 
-          if (score > bestScore && (!oppNearMate || advance > 40)) {
+          let score = advance * 1.8 - (distToM / 7) - (oppNearMate ? 45 : 0) - (isInterceptionRisk ? 55 : 0);
+          if (m.position === 'FWD') score += 20;
+
+          if (score > bestScore) {
             bestScore = score;
             bestMate = m;
           }
         });
 
-        if (bestMate && bestScore > 0) {
+        if (bestMate && (bestScore > -15 || isUnderHeavyPressure)) {
           executePassCb(player);
           return;
         }
       }
 
-      // Conducir enfilando hacia el arco rival
-      const dirToGoal = normalize(oppGoalX - player.x, oppGoalY - player.y);
+      // CONDUCCIÓN CON ESQUIVE DINÁMICO:
+      // Si hay un rival bloqueando directamente el camino hacia el arco, esquivarlo por una banda
+      let dirToGoal = normalize(oppGoalX - player.x, oppGoalY - player.y);
+      if (isUnderHeavyPressure && nearestRival.player) {
+        const dodgeY = player.y >= nearestRival.player.y ? 1 : -1;
+        dirToGoal = normalize(dirToGoal.x * 0.7, dirToGoal.y * 0.7 + dodgeY * 0.5);
+      }
+
       const spd = (player.speed / 100) * 2.55 * speedFactor;
       player.vx = dirToGoal.x * spd;
       player.vy = dirToGoal.y * spd;
@@ -172,20 +186,18 @@ export class PlayerAI {
         const ownGoalX = player.isHome ? fieldLeft + 35 : fieldRight - 35;
         const ownGoalY = pitchHeight / 2;
 
-        // Buscar si hay un atacante rival infiltrado cerca de nuestra área sin marca directa
         const dangerousOpponent = opponentTeam.players.find(opp => {
           if (opp.position === 'GK') return false;
           const distToOwnGoal = distance(opp.x, opp.y, ownGoalX, ownGoalY);
-          return distToOwnGoal < 220;
+          return distToOwnGoal < 230;
         });
 
         let blockX = ownGoalX + (ball.x - ownGoalX) * 0.35;
         let blockY = ownGoalY + (ball.y - ownGoalY) * 0.50;
 
-        // Si hay un atacante peligroso en el área, hacer cobertura intermedia
         if (dangerousOpponent) {
-          blockX = (blockX * 0.6) + (dangerousOpponent.x * 0.4);
-          blockY = (blockY * 0.5) + (dangerousOpponent.y * 0.5);
+          blockX = (blockX * 0.55) + (dangerousOpponent.x * 0.45);
+          blockY = (blockY * 0.45) + (dangerousOpponent.y * 0.55);
         }
 
         const dToBlock = distance(player.x, player.y, blockX, blockY);
@@ -217,34 +229,27 @@ export class PlayerAI {
 
     if (teamHasBall) {
       // EN ATAQUE: DESMARQUES INTELIGENTES
-      // Los jugadores no se quedan estáticos: tiran diagonales hacia espacios libres
       if (player.position === 'DEF') {
         targetX = player.isHome ? player.homeX + 75 : player.homeX - 75;
       } else if (player.position === 'MID') {
-        // El mediocampista ofrece línea de apoyo escalonada
         targetX = player.isHome ? player.homeX + 115 : player.homeX - 115;
-        // Si el balón está muy escorado a una banda, el medio bascula al centro para el pase atrás
         if (Math.abs(ball.y - pitchHeight / 2) > 90) {
           targetY = pitchHeight / 2 + (player.homeY - pitchHeight / 2) * 0.5;
         }
       } else if (player.position === 'FWD') {
-        // DESMARQUE DE RUPTURA: Picar a la espalda de la defensa hacia el área rival
         const forwardAdv = player.isHome ? 145 : -145;
         targetX = player.isHome
           ? Math.min(fieldRight - 65, player.homeX + forwardAdv)
           : Math.max(fieldLeft + 65, player.homeX + forwardAdv);
 
-        // Desmarque diagonal inteligente: alejarse del defensa rival más cercano
         const nearestDefender = opponentTeam.players.find(opp => opp.position === 'DEF');
         if (nearestDefender) {
           const dy = player.y - nearestDefender.y;
-          // Si el defensa está a la misma altura, el delantero se abre o pica al segundo palo
           const diagonalSign = dy >= 0 ? 1 : -1;
           targetY += diagonalSign * 45;
         }
       }
 
-      // Si el equipo va perdiendo al final, adelantar aún más el bloque ofensivo
       if (scoreDiff < 0 && isLateGame) {
         targetX += player.isHome ? 30 : -30;
       }
@@ -258,7 +263,6 @@ export class PlayerAI {
         targetX = player.homeX;
       }
 
-      // Si el equipo va ganando al final, repliegue intensivo de todas las líneas
       if (scoreDiff > 0 && isLateGame) {
         targetX += player.isHome ? -35 : 35;
       }
