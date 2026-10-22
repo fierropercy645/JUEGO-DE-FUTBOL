@@ -99,6 +99,7 @@ export class Player {
     this.isCelebrating = false;
     this.celebrationTimer = 0;
     this.celebrationType = 'siuu';
+    this.currentStamina = 100;
   }
 
   triggerShootAnimation() {

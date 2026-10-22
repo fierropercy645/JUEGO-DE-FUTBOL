@@ -67,11 +67,15 @@ export class ResultsScreen {
             <button id="btnContinueLeague" class="btn btn-primary" style="padding: 14px 28px;">
               🏆 Volver a la Jornada de Liga
             </button>
+          ` : (this.matchContext.isCupMatch ? `
+            <button id="btnContinueCup" class="btn btn-primary" style="padding: 14px 28px;">
+              🥇 Continuar Leyendas Cup
+            </button>
           ` : `
             <button id="btnRematch" class="btn btn-primary" style="padding: 14px 28px;">
               🔄 Jugar Revancha
             </button>
-          `}
+          `)}
           <button id="btnReturn" class="btn" style="padding: 14px 28px;">
             🏠 Volver al Menú
           </button>
@@ -97,6 +101,7 @@ export class ResultsScreen {
     const btnReturn = container.querySelector('#btnReturn');
     const btnRematch = container.querySelector('#btnRematch');
     const btnContinueLeague = container.querySelector('#btnContinueLeague');
+    const btnContinueCup = container.querySelector('#btnContinueCup');
 
     const goMenu = () => this.app.navigate('main-menu');
     btnBackToMenu?.addEventListener('click', goMenu);
@@ -108,6 +113,10 @@ export class ResultsScreen {
 
     btnContinueLeague?.addEventListener('click', () => {
       this.app.navigate('league');
+    });
+
+    btnContinueCup?.addEventListener('click', () => {
+      this.app.navigate('tournament');
     });
   }
 }

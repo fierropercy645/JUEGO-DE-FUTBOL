@@ -187,8 +187,9 @@ export class Match {
 
     const isSprinting = controls.isActionActive('sprint');
     const move = controls.getMovementVector();
-    // Velocidad realista y cadenciosa: trote normal a 2.55, sprint con K a 3.35
-    const speedMult = isSprinting ? 1.32 : 1.0;
+    // Velocidad realista y cadenciosa: trote normal a 2.55, sprint con K a 3.35 afectado por fatiga
+    const staminaRatio = (this.userControlledPlayer.currentStamina || 100) / 100;
+    const speedMult = isSprinting ? (1.0 + 0.32 * staminaRatio) : (0.85 + 0.15 * staminaRatio);
     const playerSpeed = (this.userControlledPlayer.speed / 100) * 2.55 * speedMult;
 
     if (move.x !== 0 || move.y !== 0) {

@@ -144,6 +144,7 @@ export class App {
       homeTeam,
       awayTeam,
       isLeagueMatch: !!options.isLeagueMatch,
+      isCupMatch: !!options.isCupMatch,
       difficulty: options.difficulty,
       matchId: options.matchId || `match-${Date.now()}`,
     });

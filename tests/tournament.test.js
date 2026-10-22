@@ -45,4 +45,16 @@ describe('Tournament Knockout Mode (Leyendas Cup)', () => {
     expect(q1.penaltiesAway).toBe(4);
     expect(q1.winnerId).toBe(q1.homeTeamId);
   });
+
+  it('serializes to JSON and recovers full tournament state without corruption', () => {
+    const tournament = new Tournament('Leyendas Cup', DEFAULT_TEAMS, DEFAULT_TEAMS[0].id);
+    tournament.recordMatchResult('q1', 2, 0);
+    const json = tournament.toJSON();
+
+    const restored = new Tournament(json.name, DEFAULT_TEAMS, json.userTeamId, json);
+    expect(restored.name).toBe('Leyendas Cup');
+    expect(restored.brackets.quarters[0].played).toBe(true);
+    expect(restored.brackets.quarters[0].homeGoals).toBe(2);
+    expect(restored.brackets.quarters[0].winnerId).toBe(tournament.brackets.quarters[0].winnerId);
+  });
 });
