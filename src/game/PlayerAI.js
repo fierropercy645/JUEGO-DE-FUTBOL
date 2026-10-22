@@ -93,7 +93,7 @@ export class PlayerAI {
     const isDesignatedPresser = (singlePresser === player);
 
     if (!teamHasBall) {
-      // CASO A: Eres el jugador asignado para presionar -> Presiona sin importar la distancia
+      // CASO A: Eres el jugador designado para presionar -> Presiona el balón
       if (isDesignatedPresser) {
         let dir = normalize(ball.x - player.x, ball.y - player.y);
 
@@ -117,40 +117,37 @@ export class PlayerAI {
         return;
       }
 
-      // CASO B: Eres el DEFENSA (DEF) y no eres el presser ->
-      // Te posicionas activamente entre el balón y el centro de tu arco para bloquear cualquier tiro
+      // CASO B: El DEFENSA (DEF) NUNCA ataca al bulto ni va al balón.
+      // Se queda atrás haciendo cobertura posicional cubriendo la línea hacia el arco.
       if (player.position === 'DEF') {
-        const ownGoalX = player.isHome ? fieldLeft + 20 : fieldRight - 20;
+        const ownGoalX = player.isHome ? fieldLeft + 35 : fieldRight - 35;
         const ownGoalY = pitchHeight / 2;
 
-        // Punto de corte: a 1/3 de distancia entre el arco propio y el balón
-        const blockX = ownGoalX + (ball.x - ownGoalX) * 0.45;
-        const blockY = ownGoalY + (ball.y - ownGoalY) * 0.70;
+        // Se planta firme protegiendo el centro del área penal
+        const blockX = ownGoalX + (ball.x - ownGoalX) * 0.35;
+        const blockY = ownGoalY + (ball.y - ownGoalY) * 0.50;
 
         const dToBlock = distance(player.x, player.y, blockX, blockY);
-        if (dToBlock > 14) {
+        if (dToBlock > 12) {
           const dir = normalize(blockX - player.x, blockY - player.y);
-          const spd = (player.speed / 100) * 2.5 * speedFactor;
+          const spd = (player.speed / 100) * 2.4 * speedFactor;
           player.vx = dir.x * spd;
           player.vy = dir.y * spd;
+          player.facingX = normalize(ball.x - player.x, ball.y - player.y).x;
+          player.facingY = normalize(ball.x - player.x, ball.y - player.y).y;
+          return;
+        } else {
+          player.vx *= 0.5;
+          player.vy *= 0.5;
           player.facingX = normalize(ball.x - player.x, ball.y - player.y).x;
           player.facingY = normalize(ball.x - player.x, ball.y - player.y).y;
           return;
         }
       }
 
-      // CASO C: MEDIOCAMPISTA / DELANTERO en defensa ->
-      // Si el balón está en su zona (< 180px), va a apoyar la marca en repliegue
-      const dToBall = distance(player.x, player.y, ball.x, ball.y);
-      if (dToBall < 170) {
-        const dir = normalize(ball.x - player.x, ball.y - player.y);
-        const spd = (player.speed / 100) * 2.3 * speedFactor;
-        player.vx = dir.x * spd;
-        player.vy = dir.y * spd;
-        player.facingX = dir.x;
-        player.facingY = dir.y;
-        return;
-      }
+      // CASO C: LOS DEMÁS JUGADORES (MED / FWD no asignados)
+      // NO van al balón: retroceden ordenadamente a su posición táctica de espera
+      // para cortar pases y esperar el despeje o recuperación.
     }
 
     // 3. MOVIMIENTO TÁCTICO COLECTIVO DINÁMICO (CUANDO TU EQUIPO ATACA O SE REPLIEGA)
@@ -171,11 +168,11 @@ export class PlayerAI {
         targetX = player.isHome ? Math.min(fieldRight - 50, player.homeX + 150) : Math.max(fieldLeft + 50, player.homeX - 150);
       }
     } else {
-      // EN DEFENSA: Repliegue activo tapando el avance
+      // EN DEFENSA: Mantener la formación sin adelantar ni amontonarse
       if (player.position === 'DEF') {
-        targetX = player.isHome ? Math.max(fieldLeft + 40, ball.x - 70) : Math.min(fieldRight - 40, ball.x + 70);
+        targetX = player.isHome ? fieldLeft + 75 : fieldRight - 75;
       } else if (player.position === 'MID') {
-        targetX = player.isHome ? ball.x - 40 : ball.x + 40;
+        targetX = player.isHome ? player.homeX - 25 : player.homeX + 25;
       } else if (player.position === 'FWD') {
         targetX = player.homeX;
       }
