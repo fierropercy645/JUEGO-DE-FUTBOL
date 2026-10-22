@@ -487,6 +487,60 @@ export class Match {
     return false;
   }
 
+  /**
+   * Realiza una sustitución profesional en el equipo especificado:
+   * Retira al futbolista del campo y da entrada al suplente del banquillo con 100% de resistencia.
+   * Si el jugador saliente tenía el control del usuario o la posesión del balón, se transfieren limpiamente.
+   *
+   * @param {string} outPlayerId - ID del jugador que sale
+   * @param {string} inPlayerId - ID del suplente que ingresa
+   * @param {boolean} [isHome=true] - Si la sustitución pertenece al equipo local
+   * @returns {{ success: boolean, outPlayer?: Player, inPlayer?: Player, reason?: string }}
+   */
+  makeSubstitution(outPlayerId, inPlayerId, isHome = true) {
+    const targetTeam = isHome ? this.homeTeam : this.awayTeam;
+    const result = targetTeam.substitute(outPlayerId, inPlayerId);
+
+    if (!result.success) {
+      return result;
+    }
+
+    const { outPlayer, inPlayer } = result;
+
+    // Transferir posesión del balón si el saliente lo tenía
+    if (this.ball.owner === outPlayer) {
+      this.ball.setOwner(inPlayer);
+    }
+
+    // Transferir control de usuario si el saliente estaba seleccionado
+    if (this.userControlledPlayer === outPlayer) {
+      this.setUserControlledPlayer(inPlayer);
+    }
+
+    // Feedback sonoro y banner reglamentario
+    sound.playWhistle();
+    this.showBanner(
+      `SUSTITUCIÓN EN ${targetTeam.shortName}`,
+      `Sale #${outPlayer.number} ${outPlayer.name} ➔ Entra #${inPlayer.number} ${inPlayer.name}`,
+      2.5
+    );
+
+    return result;
+  }
+
+  /**
+   * Cambia la formación táctica durante el partido (4-3-3, 4-4-2, 3-5-2)
+   */
+  changeFormation(newFormation, isHome = true) {
+    const targetTeam = isHome ? this.homeTeam : this.awayTeam;
+    targetTeam.setFormation(newFormation, PITCH.WIDTH, PITCH.HEIGHT);
+    this.showBanner(
+      `CAMBIO TÁCTICO: ${newFormation}`,
+      `${targetTeam.name} reordena sus líneas en el campo`,
+      2.0
+    );
+  }
+
   executePass(passer) {
     const isHome = passer.isHome;
     const team = isHome ? this.homeTeam : this.awayTeam;

@@ -127,16 +127,59 @@ export class MatchScreen {
           <span><kbd>1</kbd>-<kbd>5</kbd> Seleccionar</span>
         </div>
 
-        <!-- Pause Modal -->
+        <!-- Pause Modal / Gestión Táctica y Sustituciones -->
         <div id="pauseModal" class="overlay" style="display: none;">
-          <div class="modal-content">
-            <h2 style="font-size: 1.8rem; margin-bottom: 8px;">JUEGO EN PAUSA</h2>
-            <p style="color: var(--text-muted); margin-bottom: 24px;">El encuentro se encuentra detenido</p>
+          <div class="modal-content" style="max-width: 680px; width: 92%; max-height: 90vh; overflow-y: auto; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">
+              <div>
+                <h2 style="font-size: 1.6rem; margin: 0; color: var(--accent-gold);">PAUSA & GESTIÓN TÁCTICA</h2>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Ajusta la formación y realiza sustituciones en tu plantilla</span>
+              </div>
+              <button id="btnQuickResume" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">▶️ Reanudar</button>
+            </div>
 
-            <div style="display: flex; flex-direction: column; gap: 12px; width: 260px; margin: 0 auto;">
-              <button id="btnResume" class="btn btn-primary">▶️ Continuar Partido</button>
-              <button id="btnRestart" class="btn">🔄 Reiniciar Partido</button>
-              <button id="btnQuitMatch" class="btn btn-danger">🚪 Salir al Menú</button>
+            <!-- Panel de Formación Táctica -->
+            <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="font-weight: 700; font-size: 0.9rem; color: #fff;">Esquema Táctico:</label>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn btn-formation" data-formation="4-3-3" style="padding: 4px 10px; font-size: 0.8rem;">4-3-3</button>
+                  <button type="button" class="btn btn-formation" data-formation="4-4-2" style="padding: 4px 10px; font-size: 0.8rem;">4-4-2</button>
+                  <button type="button" class="btn btn-formation" data-formation="3-5-2" style="padding: 4px 10px; font-size: 0.8rem;">3-5-2</button>
+                </div>
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);" id="currentFormationNotice">
+                Formación activa: 4-3-3
+              </div>
+            </div>
+
+            <!-- Panel de Sustituciones -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+              <!-- Titulares en Cancha -->
+              <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 10px; border-radius: 8px;">
+                <div style="font-weight: 700; font-size: 0.85rem; color: #48cae4; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                  <span>TITULARES (EN CANCHA)</span>
+                  <span id="subRemainingBadge" style="color: var(--accent-gold); font-size: 0.75rem;">3 cambios disp.</span>
+                </div>
+                <div id="lineupContainer" style="display: flex; flex-direction: column; gap: 6px;"></div>
+              </div>
+
+              <!-- Suplentes en el Banquillo -->
+              <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 10px; border-radius: 8px;">
+                <div style="font-weight: 700; font-size: 0.85rem; color: #a8dadc; margin-bottom: 8px;">
+                  <span>BANQUILLO (SUPLENTES DISPONIBLES)</span>
+                </div>
+                <div id="benchContainer" style="display: flex; flex-direction: column; gap: 6px;"></div>
+              </div>
+            </div>
+
+            <div id="subActionNotice" style="display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 14px; text-align: center;"></div>
+
+            <!-- Acciones del Modal -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+              <button id="btnRestart" class="btn" style="font-size: 0.85rem;">🔄 Reiniciar</button>
+              <button id="btnQuitMatch" class="btn btn-danger" style="font-size: 0.85rem;">🚪 Salir</button>
+              <button id="btnResume" class="btn btn-primary" style="font-size: 0.85rem;">▶️ Continuar Partido</button>
             </div>
           </div>
         </div>
@@ -155,11 +198,27 @@ export class MatchScreen {
 
     const btnPause = container.querySelector('#btnPauseMatch');
     const btnResume = container.querySelector('#btnResume');
+    const btnQuickResume = container.querySelector('#btnQuickResume');
     const btnRestart = container.querySelector('#btnRestart');
     const btnQuitMatch = container.querySelector('#btnQuitMatch');
 
     btnPause?.addEventListener('click', () => this.togglePause(true));
     btnResume?.addEventListener('click', () => this.togglePause(false));
+    btnQuickResume?.addEventListener('click', () => this.togglePause(false));
+
+    // Botones de cambio de formación táctica
+    const formationButtons = container.querySelectorAll('.btn-formation');
+    formationButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const formation = btn.dataset.formation;
+        if (formation) {
+          this.match.changeFormation(formation, true);
+          const notice = container.querySelector('#currentFormationNotice');
+          if (notice) notice.textContent = `Formación activa: ${formation}`;
+          this.renderLineupAndBench(container);
+        }
+      });
+    });
 
     btnRestart?.addEventListener('click', () => {
       if (confirm('¿Reiniciar el partido actual?')) {
@@ -327,11 +386,137 @@ export class MatchScreen {
     this.isPaused = shouldPause;
     if (this.isPaused) {
       this.match.pause();
-      if (this.pauseModal) this.pauseModal.style.display = 'flex';
+      if (this.pauseModal) {
+        this.pauseModal.style.display = 'flex';
+        const container = this.pauseModal.closest('.match-screen') || document;
+        this.renderLineupAndBench(container);
+      }
     } else {
       this.match.resume();
       if (this.pauseModal) this.pauseModal.style.display = 'none';
     }
+  }
+
+  renderLineupAndBench(container) {
+    const lineupContainer = container.querySelector('#lineupContainer');
+    const benchContainer = container.querySelector('#benchContainer');
+    const subRemainingBadge = container.querySelector('#subRemainingBadge');
+    const subNotice = container.querySelector('#subActionNotice');
+
+    if (!lineupContainer || !benchContainer) return;
+
+    lineupContainer.innerHTML = '';
+    benchContainer.innerHTML = '';
+
+    const homeTeam = this.match.homeTeam;
+    if (subRemainingBadge) {
+      subRemainingBadge.textContent = `${homeTeam.substitutionsRemaining} cambios disp.`;
+    }
+
+    let selectedOutPlayerId = this.selectedOutPlayerId || null;
+    let selectedInPlayerId = this.selectedInPlayerId || null;
+
+    // Render titulares
+    homeTeam.players.forEach(p => {
+      const staminaPct = Math.round(p.currentStamina || 100);
+      let staminaColor = '#10b981';
+      if (staminaPct < 40) staminaColor = '#ef4444';
+      else if (staminaPct < 70) staminaColor = '#f59e0b';
+
+      const isSelected = selectedOutPlayerId === p.id;
+      const card = document.createElement('div');
+      card.style.cssText = `
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 6px 10px; border-radius: 6px; cursor: pointer;
+        background: ${isSelected ? 'rgba(72, 202, 228, 0.25)' : 'rgba(255,255,255,0.05)'};
+        border: 1px solid ${isSelected ? '#48cae4' : 'rgba(255,255,255,0.08)'};
+        font-size: 0.8rem;
+      `;
+
+      card.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-weight: 700; color: #fff; width: 18px;">#${p.number}</span>
+          <span style="color: var(--accent-gold); font-weight: 600;">[${p.position}]</span>
+          <span style="color: #fff; font-weight: 500;">${p.name}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 0.7rem; color: ${staminaColor}; font-weight: 700;">${staminaPct}% ST</span>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        this.selectedOutPlayerId = isSelected ? null : p.id;
+        this.tryExecuteSubstitution(container);
+      });
+
+      lineupContainer.appendChild(card);
+    });
+
+    // Render suplentes
+    if (homeTeam.bench.length === 0) {
+      benchContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.75rem;">No hay más suplentes disponibles.</div>';
+    } else {
+      homeTeam.bench.forEach(p => {
+        const isSelected = selectedInPlayerId === p.id;
+        const card = document.createElement('div');
+        card.style.cssText = `
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 6px 10px; border-radius: 6px; cursor: pointer;
+          background: ${isSelected ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.05)'};
+          border: 1px solid ${isSelected ? '#10b981' : 'rgba(255,255,255,0.08)'};
+          font-size: 0.8rem;
+        `;
+
+        card.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 700; color: #fff; width: 18px;">#${p.number}</span>
+            <span style="color: var(--accent-gold); font-weight: 600;">[${p.position}]</span>
+            <span style="color: #fff; font-weight: 500;">${p.name}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 0.7rem; color: #a8dadc;">${p.overall} OVR</span>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          this.selectedInPlayerId = isSelected ? null : p.id;
+          this.tryExecuteSubstitution(container);
+        });
+
+        benchContainer.appendChild(card);
+      });
+    }
+  }
+
+  tryExecuteSubstitution(container) {
+    const subNotice = container.querySelector('#subActionNotice');
+    if (!this.selectedOutPlayerId || !this.selectedInPlayerId) {
+      this.renderLineupAndBench(container);
+      return;
+    }
+
+    const res = this.match.makeSubstitution(this.selectedOutPlayerId, this.selectedInPlayerId, true);
+    if (res.success) {
+      if (subNotice) {
+        subNotice.style.display = 'block';
+        subNotice.style.background = 'rgba(16, 185, 129, 0.2)';
+        subNotice.style.border = '1px solid #10b981';
+        subNotice.style.color = '#10b981';
+        subNotice.textContent = `¡Cambio realizado! Salió #${res.outPlayer.number} ${res.outPlayer.name} y entró #${res.inPlayer.number} ${res.inPlayer.name}`;
+      }
+    } else {
+      if (subNotice) {
+        subNotice.style.display = 'block';
+        subNotice.style.background = 'rgba(239, 68, 68, 0.2)';
+        subNotice.style.border = '1px solid #ef4444';
+        subNotice.style.color = '#ef4444';
+        subNotice.textContent = `Error: ${res.reason}`;
+      }
+    }
+
+    this.selectedOutPlayerId = null;
+    this.selectedInPlayerId = null;
+    this.renderLineupAndBench(container);
   }
 
   update(dt) {
