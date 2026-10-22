@@ -3,29 +3,63 @@ import { DIFFICULTY, PITCH } from '../utils/constants.js';
 
 export class PlayerAI {
   /**
-   * IA Táctica con balance real de dificultad:
-   * - FÁCIL: Menor velocidad de reacción, tiros suaves y marcas pasivas.
-   * - NORMAL: Fútbol equilibrado, presión moderada y tiros bien calculados.
-   * - DIFÍCIL: Marcaje asfixiante, anticipación, barridas y remates demoledores.
+   * IA Táctica Avanzada con Desmarques, Pases Filtrados y Defensa Zonal Inteligente:
+   * - FÁCIL: Menor velocidad de reacción, tiros suaves y marcas con mayor margen de error.
+   * - NORMAL: Fútbol equilibrado, presión moderada, desmarques fluidos y tiros bien calculados.
+   * - DIFÍCIL: Marcaje asfixiante, anticipación, repliegue ordenado, desmarques de ruptura y remates demoledores.
+   *
+   * @param {Player} player - Jugador evaluado
+   * @param {Ball} ball - Balón del partido
+   * @param {Team} team - Equipo del jugador
+   * @param {Team} opponentTeam - Equipo rival
+   * @param {number} pitchWidth - Ancho del campo
+   * @param {number} pitchHeight - Alto del campo
+   * @param {string} difficulty - Nivel de dificultad
+   * @param {Function} executePassCb - Callback de pase
+   * @param {Function} executeShootCb - Callback de tiro
+   * @param {Object} [matchContext] - Contexto de partido { scoreDiff, isLateGame, timeRatio }
    */
-  static update(player, ball, team, opponentTeam, pitchWidth, pitchHeight, difficulty = DIFFICULTY.NORMAL, executePassCb, executeShootCb) {
+  static update(
+    player,
+    ball,
+    team,
+    opponentTeam,
+    pitchWidth,
+    pitchHeight,
+    difficulty = DIFFICULTY.NORMAL,
+    executePassCb,
+    executeShootCb,
+    matchContext = {}
+  ) {
     if (player.position === 'GK') return;
 
     // Velocidades 1:1 basadas estrictamente en los atributos del jugador en TODOS los modos
-    // El orden táctico, la marca individual y la cobertura de zona aplican de manera uniforme
     let speedFactor = 1.0;
     let shootChance = 0.05;
-    let passChance = 0.06;
+    let passChance = 0.065;
     let shootRange = 260;
 
     if (difficulty === DIFFICULTY.EASY) {
-      speedFactor = 0.95; // Competitivo y divertido sin efecto enjambre
+      speedFactor = 0.95;
       shootChance = 0.035;
-      passChance = 0.04;
+      passChance = 0.045;
     } else if (difficulty === DIFFICULTY.HARD) {
-      speedFactor = 1.05; // Marcaje estricto y buen criterio
-      shootChance = 0.07;
-      passChance = 0.075;
+      speedFactor = 1.05;
+      shootChance = 0.075;
+      passChance = 0.085;
+    }
+
+    // Adaptación táctica contextual por marcador y minutos restantes
+    const scoreDiff = matchContext.scoreDiff || 0; // > 0 ganando, < 0 perdiendo
+    const isLateGame = !!matchContext.isLateGame;
+
+    if (scoreDiff < 0 && isLateGame) {
+      // Necesidad imperiosa de empatar/remontar: mayor agresividad ofensiva
+      shootChance += 0.03;
+      passChance += 0.02;
+    } else if (scoreDiff > 0 && isLateGame) {
+      // Protegiendo el resultado: pases más conservadores, tiros con mayor seguridad
+      shootRange = 220;
     }
 
     const hasBall = ball.owner === player;
@@ -33,11 +67,11 @@ export class PlayerAI {
 
     const fieldLeft = PITCH.FIELD_MARGIN_X || 60;
     const fieldRight = pitchWidth - fieldLeft;
+    const oppGoalX = player.isHome ? fieldRight : fieldLeft;
+    const oppGoalY = pitchHeight / 2;
 
     // 1. SI ESTE JUGADOR TIENE EL BALÓN (TOMA DE DECISIONES OFENSIVA):
     if (hasBall) {
-      const oppGoalX = player.isHome ? fieldRight : fieldLeft;
-      const oppGoalY = pitchHeight / 2;
       const distToGoal = distance(player.x, player.y, oppGoalX, oppGoalY);
 
       // Decisión de disparo inteligente de la IA si está en zona de ataque
@@ -49,34 +83,42 @@ export class PlayerAI {
       }
 
       // Si está mano a mano muy cerca del arco (< 150px), disparar con alta contundencia
-      if (distToGoal < 150 && Math.random() < 0.15) {
+      if (distToGoal < 150 && Math.random() < 0.16) {
         executeShootCb(player);
         return;
       }
 
-      // Pase asociativo inteligente: buscar compañeros desmarcados
+      // Pase asociativo inteligente: buscar compañeros desmarcados o picando al espacio
       if (Math.random() < passChance) {
         const mates = team.players.filter(p => p !== player && p.position !== 'GK');
-        // Buscar un compañero con línea limpia de pase
         let bestMate = null;
-        let maxAdvance = -Infinity;
+        let bestScore = -Infinity;
 
         mates.forEach(m => {
           const advance = player.isHome ? (m.x - player.x) : (player.x - m.x);
-          const oppNearMate = opponentTeam.players.some(opp => distance(opp.x, opp.y, m.x, m.y) < 32);
-          if (advance > -20 && !oppNearMate && advance > maxAdvance) {
-            maxAdvance = advance;
+          const distToM = distance(player.x, player.y, m.x, m.y);
+          if (distToM < 25) return; // Muy encima
+
+          // Comprobar si hay un rival marcándolo de cerca
+          const oppNearMate = opponentTeam.players.some(opp => distance(opp.x, opp.y, m.x, m.y) < 36);
+
+          // Ponderar desmarque hacia adelante y línea despejada
+          let score = advance * 1.5 - (oppNearMate ? 60 : 0) - (distToM / 8);
+          if (m.position === 'FWD') score += 25; // Priorizar alimentar al delantero
+
+          if (score > bestScore && (!oppNearMate || advance > 40)) {
+            bestScore = score;
             bestMate = m;
           }
         });
 
-        if (bestMate) {
+        if (bestMate && bestScore > 0) {
           executePassCb(player);
           return;
         }
       }
 
-      // Conducir enfilando hacia el arco rival con la misma base que el usuario
+      // Conducir enfilando hacia el arco rival
       const dirToGoal = normalize(oppGoalX - player.x, oppGoalY - player.y);
       const spd = (player.speed / 100) * 2.55 * speedFactor;
       player.vx = dirToGoal.x * spd;
@@ -87,10 +129,6 @@ export class PlayerAI {
     }
 
     // 2. SISTEMA DEFENSIVO ACTIVO DE FÚTBOL REAL:
-    // Si el rival tiene el balón:
-    // A) El más cercano (presser) sale a marcar y robar activamente el balón.
-    // B) El DEFENSA se interpone entre el balón y su portería (cerrando la línea de tiro).
-    // C) Los MEDIOCAMPISTAS / DELANTEROS basculan y persiguen cerrando espacios.
     const outfieldTeammates = team.players.filter(p => p.position !== 'GK');
     let singlePresser = outfieldTeammates[0];
     let minBallDist = Infinity;
@@ -129,20 +167,31 @@ export class PlayerAI {
         return;
       }
 
-      // CASO B: El DEFENSA (DEF) NUNCA ataca al bulto ni va al balón.
-      // Se queda atrás haciendo cobertura posicional cubriendo la línea hacia el arco.
+      // CASO B: El DEFENSA (DEF) cubre el área y marca al atacante desmarcado más peligroso
       if (player.position === 'DEF') {
         const ownGoalX = player.isHome ? fieldLeft + 35 : fieldRight - 35;
         const ownGoalY = pitchHeight / 2;
 
-        // Se planta firme protegiendo el centro del área penal
-        const blockX = ownGoalX + (ball.x - ownGoalX) * 0.35;
-        const blockY = ownGoalY + (ball.y - ownGoalY) * 0.50;
+        // Buscar si hay un atacante rival infiltrado cerca de nuestra área sin marca directa
+        const dangerousOpponent = opponentTeam.players.find(opp => {
+          if (opp.position === 'GK') return false;
+          const distToOwnGoal = distance(opp.x, opp.y, ownGoalX, ownGoalY);
+          return distToOwnGoal < 220;
+        });
+
+        let blockX = ownGoalX + (ball.x - ownGoalX) * 0.35;
+        let blockY = ownGoalY + (ball.y - ownGoalY) * 0.50;
+
+        // Si hay un atacante peligroso en el área, hacer cobertura intermedia
+        if (dangerousOpponent) {
+          blockX = (blockX * 0.6) + (dangerousOpponent.x * 0.4);
+          blockY = (blockY * 0.5) + (dangerousOpponent.y * 0.5);
+        }
 
         const dToBlock = distance(player.x, player.y, blockX, blockY);
         if (dToBlock > 12) {
           const dir = normalize(blockX - player.x, blockY - player.y);
-          const spd = (player.speed / 100) * 2.4 * speedFactor;
+          const spd = (player.speed / 100) * 2.45 * speedFactor;
           player.vx = dir.x * spd;
           player.vy = dir.y * spd;
           player.facingX = normalize(ball.x - player.x, ball.y - player.y).x;
@@ -156,13 +205,9 @@ export class PlayerAI {
           return;
         }
       }
-
-      // CASO C: LOS DEMÁS JUGADORES (MED / FWD no asignados)
-      // NO van al balón: retroceden ordenadamente a su posición táctica de espera
-      // para cortar pases y esperar el despeje o recuperación.
     }
 
-    // 3. MOVIMIENTO TÁCTICO COLECTIVO DINÁMICO (CUANDO TU EQUIPO ATACA O SE REPLIEGA)
+    // 3. MOVIMIENTO TÁCTICO COLECTIVO DINÁMICO (DESMARQUES EN ATAQUE Y REPLIEGUE EN DEFENSA)
     let targetX = player.homeX;
     let targetY = player.homeY;
 
@@ -171,13 +216,37 @@ export class PlayerAI {
     targetY = player.homeY + shiftY;
 
     if (teamHasBall) {
-      // EN ATAQUE: Desmarcarse y adelantar
+      // EN ATAQUE: DESMARQUES INTELIGENTES
+      // Los jugadores no se quedan estáticos: tiran diagonales hacia espacios libres
       if (player.position === 'DEF') {
-        targetX = player.isHome ? player.homeX + 70 : player.homeX - 70;
+        targetX = player.isHome ? player.homeX + 75 : player.homeX - 75;
       } else if (player.position === 'MID') {
-        targetX = player.isHome ? player.homeX + 110 : player.homeX - 110;
+        // El mediocampista ofrece línea de apoyo escalonada
+        targetX = player.isHome ? player.homeX + 115 : player.homeX - 115;
+        // Si el balón está muy escorado a una banda, el medio bascula al centro para el pase atrás
+        if (Math.abs(ball.y - pitchHeight / 2) > 90) {
+          targetY = pitchHeight / 2 + (player.homeY - pitchHeight / 2) * 0.5;
+        }
       } else if (player.position === 'FWD') {
-        targetX = player.isHome ? Math.min(fieldRight - 70, player.homeX + 130) : Math.max(fieldLeft + 70, player.homeX - 130);
+        // DESMARQUE DE RUPTURA: Picar a la espalda de la defensa hacia el área rival
+        const forwardAdv = player.isHome ? 145 : -145;
+        targetX = player.isHome
+          ? Math.min(fieldRight - 65, player.homeX + forwardAdv)
+          : Math.max(fieldLeft + 65, player.homeX + forwardAdv);
+
+        // Desmarque diagonal inteligente: alejarse del defensa rival más cercano
+        const nearestDefender = opponentTeam.players.find(opp => opp.position === 'DEF');
+        if (nearestDefender) {
+          const dy = player.y - nearestDefender.y;
+          // Si el defensa está a la misma altura, el delantero se abre o pica al segundo palo
+          const diagonalSign = dy >= 0 ? 1 : -1;
+          targetY += diagonalSign * 45;
+        }
+      }
+
+      // Si el equipo va perdiendo al final, adelantar aún más el bloque ofensivo
+      if (scoreDiff < 0 && isLateGame) {
+        targetX += player.isHome ? 30 : -30;
       }
     } else {
       // EN DEFENSA: Mantener la formación sin adelantar ni amontonarse dentro del campo
@@ -187,6 +256,11 @@ export class PlayerAI {
         targetX = player.isHome ? player.homeX - 25 : player.homeX + 25;
       } else if (player.position === 'FWD') {
         targetX = player.homeX;
+      }
+
+      // Si el equipo va ganando al final, repliegue intensivo de todas las líneas
+      if (scoreDiff > 0 && isLateGame) {
+        targetX += player.isHome ? -35 : 35;
       }
     }
 

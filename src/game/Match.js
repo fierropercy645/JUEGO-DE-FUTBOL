@@ -490,6 +490,7 @@ export class Match {
   executePass(passer) {
     const isHome = passer.isHome;
     const team = isHome ? this.homeTeam : this.awayTeam;
+    const oppTeam = isHome ? this.awayTeam : this.homeTeam;
     const mates = team.players.filter(p => p !== passer && p.position !== 'GK');
 
     let bestMate = null;
@@ -499,18 +500,43 @@ export class Match {
       const dirToMate = normalize(mate.x - passer.x, mate.y - passer.y);
       const dot = dirToMate.x * passer.facingX + dirToMate.y * passer.facingY;
       const dist = distance(passer.x, passer.y, mate.x, mate.y);
-      const score = dot * 2 - (dist / PITCH.WIDTH);
+
+      // Comprobar si hay un oponente bloqueando directamente la línea de pase
+      const isOpponentInWay = oppTeam.players.some(opp => {
+        const dPasser = distance(passer.x, passer.y, opp.x, opp.y);
+        const dMate = distance(opp.x, opp.y, mate.x, mate.y);
+        return (dPasser + dMate) < (dist + 18);
+      });
+
+      // Ponderar visión, proximidad y libertad de marca
+      let score = dot * 2.5 - (dist / PITCH.WIDTH) - (isOpponentInWay ? 1.5 : 0);
+      if (mate.position === 'FWD') score += 0.4;
+
       if (score > highestScore) {
         highestScore = score;
         bestMate = mate;
       }
     });
 
-    const passDir = bestMate
-      ? normalize(bestMate.x - passer.x, bestMate.y - passer.y)
-      : { x: passer.facingX, y: passer.facingY };
+    let passTargetX = passer.x + passer.facingX * 100;
+    let passTargetY = passer.y + passer.facingY * 100;
 
-    const power = 7.5 + (passer.pass / 100) * 4.0;
+    if (bestMate) {
+      // PASE FILTRADO INTELIGENTE (THROUGH-BALL AL ESPACIO):
+      // Si el receptor se está moviendo hacia adelante, pasar por delante de su carrera
+      const mateSpeed = Math.hypot(bestMate.vx, bestMate.vy);
+      if (mateSpeed > 0.5) {
+        const leadDistance = Math.min(48, mateSpeed * 18);
+        passTargetX = bestMate.x + (bestMate.facingX || 0) * leadDistance;
+        passTargetY = bestMate.y + (bestMate.facingY || 0) * leadDistance;
+      } else {
+        passTargetX = bestMate.x;
+        passTargetY = bestMate.y;
+      }
+    }
+
+    const passDir = normalize(passTargetX - passer.x, passTargetY - passer.y);
+    const power = 7.8 + (passer.pass / 100) * 4.2;
     this.ball.kick(passDir.x * power, passDir.y * power, passer);
     passer.kickCooldown = 0.3;
 
@@ -651,6 +677,22 @@ export class Match {
     GoalkeeperAI.update(homeGK, this.ball, PITCH.WIDTH, PITCH.HEIGHT, this.difficulty, null, dt);
     GoalkeeperAI.update(awayGK, this.ball, PITCH.WIDTH, PITCH.HEIGHT, this.difficulty, null, dt);
 
+    const isLateGame = (this.totalDurationSeconds - this.elapsedSeconds) < 45;
+    const homeScore = this.stats ? this.stats.homeGoals : 0;
+    const awayScore = this.stats ? this.stats.awayGoals : 0;
+
+    const homeContext = {
+      scoreDiff: homeScore - awayScore,
+      isLateGame,
+      timeRatio: this.elapsedSeconds / Math.max(1, this.totalDurationSeconds)
+    };
+
+    const awayContext = {
+      scoreDiff: awayScore - homeScore,
+      isLateGame,
+      timeRatio: this.elapsedSeconds / Math.max(1, this.totalDurationSeconds)
+    };
+
     this.homeTeam.players.forEach(p => {
       if (p !== this.userControlledPlayer && p !== homeGK) {
         PlayerAI.update(
@@ -662,7 +704,8 @@ export class Match {
           PITCH.HEIGHT,
           this.difficulty,
           this.executePass.bind(this),
-          this.executeShot.bind(this)
+          this.executeShot.bind(this),
+          homeContext
         );
       }
     });
@@ -678,7 +721,8 @@ export class Match {
           PITCH.HEIGHT,
           this.difficulty,
           this.executePass.bind(this),
-          this.executeShot.bind(this)
+          this.executeShot.bind(this),
+          awayContext
         );
       }
     });
