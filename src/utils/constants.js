@@ -41,4 +41,5 @@ export const STORAGE_KEYS = {
   SETTINGS: 'fl_settings_v1',
   STATS: 'fl_stats_v1',
   LEAGUE: 'fl_league_v1',
+  TOURNAMENT: 'fl_tournament_v1',
 };

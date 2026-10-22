@@ -14,6 +14,7 @@ export class Player {
     this.defense = data.defense || 80;
     this.ballControl = data.ballControl || 80;
     this.stamina = data.stamina || 85;
+    this.currentStamina = 100; // Resistencia de 0 a 100 durante el partido
 
     this.teamId = teamId;
     this.isHome = isHome;
@@ -186,8 +187,12 @@ export class Player {
     const currentSpeed = Math.hypot(this.vx, this.vy);
     if (currentSpeed > 0.35) {
       this.animTimer += dt * currentSpeed * 4.5;
+      // Desgaste moderado de resistencia al correr o esprintar
+      const sprintFactor = currentSpeed > 3.0 ? 2.5 : 1.0;
+      this.currentStamina = Math.max(25, this.currentStamina - dt * 0.45 * sprintFactor);
     } else {
-      // Respiración o postura sutil estática sin temblores
+      // Recuperación de resistencia al estar detenido
+      this.currentStamina = Math.min(100, this.currentStamina + dt * 0.6);
       this.animTimer = 0;
     }
 

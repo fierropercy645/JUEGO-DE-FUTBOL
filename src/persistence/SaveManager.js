@@ -36,6 +36,18 @@ export class SaveManager {
     return StorageService.remove(STORAGE_KEYS.LEAGUE);
   }
 
+  static getTournament() {
+    return StorageService.get(STORAGE_KEYS.TOURNAMENT, null);
+  }
+
+  static saveTournament(tournamentData) {
+    return StorageService.set(STORAGE_KEYS.TOURNAMENT, tournamentData);
+  }
+
+  static clearTournament() {
+    return StorageService.remove(STORAGE_KEYS.TOURNAMENT);
+  }
+
   static getStatsHistory() {
     const list = StorageService.get(STORAGE_KEYS.STATS, []);
     return Array.isArray(list) ? list : [];

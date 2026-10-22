@@ -15,17 +15,23 @@ export class TeamSelection {
 
   render() {
     const isLeagueMode = this.mode === 'league-new';
+    const isCupMode = this.mode === 'cup-new';
+    const isTournamentSelection = isLeagueMode || isCupMode;
+
+    let title = 'Configurar Partido Rápido';
+    if (isLeagueMode) title = 'Selección de Club para el Modo Liga';
+    if (isCupMode) title = 'Selecciona tu Equipo para la Leyendas Cup';
 
     return `
       <div class="screen">
         <div class="screen-header">
           <div class="screen-title">
-            ${isLeagueMode ? 'Selección de Club para el Modo Liga' : 'Configurar Partido Rápido'}
+            ${title}
           </div>
           <button id="btnBack" class="btn btn-secondary">← Volver al Menú</button>
         </div>
 
-        ${isLeagueMode ? this.renderLeagueSelection() : this.renderQuickMatchSelection()}
+        ${isTournamentSelection ? this.renderLeagueSelection() : this.renderQuickMatchSelection()}
 
         ${!isLeagueMode ? `
           <!-- SELECTOR DE NIVEL DE DIFICULTAD DIRECTO EN PARTIDO RÁPIDO -->
@@ -217,7 +223,7 @@ export class TeamSelection {
       });
     });
 
-    if (this.mode === 'league-new') {
+    if (this.mode === 'league-new' || this.mode === 'cup-new') {
       const cards = container.querySelectorAll('.team-card');
       cards.forEach(card => {
         card.addEventListener('click', () => {
@@ -229,7 +235,11 @@ export class TeamSelection {
 
       btnStart?.addEventListener('click', () => {
         const userTeam = this.teams[this.selectedUserLeagueIndex];
-        this.app.startNewLeague(userTeam.id);
+        if (this.mode === 'cup-new') {
+          this.app.startNewTournament(userTeam.id);
+        } else {
+          this.app.startNewLeague(userTeam.id);
+        }
       });
     } else {
       selectHome?.addEventListener('change', (e) => {

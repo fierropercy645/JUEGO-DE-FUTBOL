@@ -1,11 +1,13 @@
 import { SaveManager } from '../persistence/SaveManager.js';
 import { League } from '../competitions/League.js';
+import { Tournament } from '../competitions/Tournament.js';
 import { DEFAULT_TEAMS } from '../data/teams.js';
 import { MainMenu } from '../ui/MainMenu.js';
 import { TeamSelection } from '../ui/TeamSelection.js';
 import { MatchScreen } from '../ui/MatchScreen.js';
 import { ResultsScreen } from '../ui/ResultsScreen.js';
 import { LeagueScreen } from '../ui/LeagueScreen.js';
+import { TournamentScreen } from '../ui/TournamentScreen.js';
 import { StatisticsScreen } from '../ui/StatisticsScreen.js';
 import { SettingsScreen } from '../ui/SettingsScreen.js';
 import { TeamsCatalogScreen } from '../ui/TeamsCatalogScreen.js';
@@ -20,6 +22,10 @@ export class App {
     // Load league if saved
     const savedLeagueData = SaveManager.getLeague();
     this.league = savedLeagueData ? new League(savedLeagueData.name, DEFAULT_TEAMS, savedLeagueData.userTeamId, savedLeagueData) : null;
+
+    // Load tournament if saved
+    const savedTourneyData = SaveManager.getTournament();
+    this.tournament = savedTourneyData ? new Tournament(savedTourneyData.name, DEFAULT_TEAMS, savedTourneyData.userTeamId, savedTourneyData) : null;
 
     this.navigate('main-menu');
   }
@@ -38,6 +44,31 @@ export class App {
 
   hasSavedLeague() {
     return this.league !== null;
+  }
+
+  getTournament() {
+    return this.tournament;
+  }
+
+  hasSavedTournament() {
+    return this.tournament !== null;
+  }
+
+  startNewTournament(userTeamId) {
+    this.tournament = new Tournament('Leyendas Cup', DEFAULT_TEAMS, userTeamId);
+    this.saveTournamentState();
+    this.navigate('tournament');
+  }
+
+  saveTournamentState() {
+    if (this.tournament) {
+      SaveManager.saveTournament(this.tournament.toJSON());
+    }
+  }
+
+  clearTournament() {
+    this.tournament = null;
+    SaveManager.clearTournament();
   }
 
   startNewLeague(userTeamId) {
@@ -80,6 +111,9 @@ export class App {
         break;
       case 'league':
         this.currentScreenInstance = new LeagueScreen(this);
+        break;
+      case 'tournament':
+        this.currentScreenInstance = new TournamentScreen(this);
         break;
       case 'stats':
         this.currentScreenInstance = new StatisticsScreen(this);
@@ -124,6 +158,13 @@ export class App {
       this.league.recordMatchResult(matchContext.matchId, stats.homeGoals, stats.awayGoals, false);
       this.league.checkAdvanceRound();
       this.saveLeagueState();
+    }
+
+    // If it was a cup match, update the tournament bracket
+    if (matchContext.isCupMatch && this.tournament) {
+      const penalties = stats.penaltiesHome !== undefined ? { home: stats.penaltiesHome, away: stats.penaltiesAway } : null;
+      this.tournament.recordMatchResult(matchContext.matchId, stats.homeGoals, stats.awayGoals, penalties);
+      this.saveTournamentState();
     }
 
     this.navigate('results', { stats, matchContext });

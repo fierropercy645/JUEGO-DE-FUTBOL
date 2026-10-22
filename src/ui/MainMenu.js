@@ -54,8 +54,11 @@ export class MainMenu {
             ` : ''}
 
             <div class="cover-secondary-grid">
+              <button id="btnCup" class="btn" style="border-color: var(--accent-gold); color: var(--accent-gold);">
+                🥇 Leyendas Cup
+              </button>
               <button id="btnNewLeague" class="btn">
-                🏆 ${hasLeague ? 'Nueva Liga' : 'Modo Liga'}
+                🏆 ${hasLeague ? 'Modo Liga' : 'Modo Liga'}
               </button>
               <button id="btnTeams" class="btn">
                 🛡️ Plantillas
@@ -81,10 +84,15 @@ export class MainMenu {
   mount(container) {
     const btnQuickMatch = container.querySelector('#btnQuickMatch');
     const btnContinueLeague = container.querySelector('#btnContinueLeague');
+    const btnCup = container.querySelector('#btnCup');
     const btnNewLeague = container.querySelector('#btnNewLeague');
     const btnTeams = container.querySelector('#btnTeams');
     const btnStats = container.querySelector('#btnStats');
     const btnSettings = container.querySelector('#btnSettings');
+
+    btnCup?.addEventListener('click', () => {
+      this.app.navigate('tournament');
+    });
 
     btnQuickMatch?.addEventListener('click', () => {
       this.app.navigate('team-select', { mode: 'quick' });

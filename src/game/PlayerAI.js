@@ -14,18 +14,18 @@ export class PlayerAI {
     // Velocidades 1:1 basadas estrictamente en los atributos del jugador en TODOS los modos
     // El orden táctico, la marca individual y la cobertura de zona aplican de manera uniforme
     let speedFactor = 1.0;
-    let shootChance = 0.045;
-    let passChance = 0.045;
+    let shootChance = 0.05;
+    let passChance = 0.06;
     let shootRange = 260;
 
     if (difficulty === DIFFICULTY.EASY) {
       speedFactor = 0.95; // Competitivo y divertido sin efecto enjambre
       shootChance = 0.035;
-      passChance = 0.035;
+      passChance = 0.04;
     } else if (difficulty === DIFFICULTY.HARD) {
       speedFactor = 1.05; // Marcaje estricto y buen criterio
-      shootChance = 0.06;
-      passChance = 0.055;
+      shootChance = 0.07;
+      passChance = 0.075;
     }
 
     const hasBall = ball.owner === player;
@@ -34,7 +34,7 @@ export class PlayerAI {
     const fieldLeft = PITCH.FIELD_MARGIN_X || 60;
     const fieldRight = pitchWidth - fieldLeft;
 
-    // 1. SI ESTE JUGADOR TIENE EL BALÓN:
+    // 1. SI ESTE JUGADOR TIENE EL BALÓN (TOMA DE DECISIONES OFENSIVA):
     if (hasBall) {
       const oppGoalX = player.isHome ? fieldRight : fieldLeft;
       const oppGoalY = pitchHeight / 2;
@@ -48,17 +48,29 @@ export class PlayerAI {
         }
       }
 
-      // Si está mano a mano muy cerca del arco (< 140px), disparar con alta contundencia
-      if (distToGoal < 150 && Math.random() < 0.12) {
+      // Si está mano a mano muy cerca del arco (< 150px), disparar con alta contundencia
+      if (distToGoal < 150 && Math.random() < 0.15) {
         executeShootCb(player);
         return;
       }
 
-      // Pase si hay compañero en mejor posición adelantada
+      // Pase asociativo inteligente: buscar compañeros desmarcados
       if (Math.random() < passChance) {
         const mates = team.players.filter(p => p !== player && p.position !== 'GK');
-        const forwardMates = mates.filter(m => (player.isHome ? m.x > player.x : m.x < player.x));
-        if (forwardMates.length > 0) {
+        // Buscar un compañero con línea limpia de pase
+        let bestMate = null;
+        let maxAdvance = -Infinity;
+
+        mates.forEach(m => {
+          const advance = player.isHome ? (m.x - player.x) : (player.x - m.x);
+          const oppNearMate = opponentTeam.players.some(opp => distance(opp.x, opp.y, m.x, m.y) < 32);
+          if (advance > -20 && !oppNearMate && advance > maxAdvance) {
+            maxAdvance = advance;
+            bestMate = m;
+          }
+        });
+
+        if (bestMate) {
           executePassCb(player);
           return;
         }
