@@ -8,7 +8,7 @@ export class GoalkeeperAI {
    * 2. Recibe y tapa el balón.
    * 3. Tras atajar, despeja/envía el balón con un saque largo hacia sus compañeros de campo.
    */
-  static update(gk, ball, pitchWidth, pitchHeight, difficulty = DIFFICULTY.NORMAL, executePassCb) {
+  static update(gk, ball, pitchWidth, pitchHeight, difficulty = DIFFICULTY.NORMAL, executePassCb, dt = 0.016) {
     const isHome = gk.isHome;
     const fieldLeft = PITCH.FIELD_MARGIN_X || 60;
     const fieldRight = pitchWidth - fieldLeft;
@@ -22,24 +22,36 @@ export class GoalkeeperAI {
       speedFactor = 1.15; // Ágil pero humano
     }
 
-    // SI EL ARQUERO TIENE EL BALÓN (LO RECIBIÓ O TIENTA TRAS ATAJAR):
+    // SI EL ARQUERO TIENE EL BALÓN (LO RECIBIÓ O ATRAPÓ TRAS ATAJAR):
     if (ball.owner === gk) {
-      if (!gk.gkHoldTimer) gk.gkHoldTimer = 1.0;
-      gk.gkHoldTimer -= 0.016; // Aproximadamente 60fps dt
+      if (gk.gkHoldTimer === undefined || gk.gkHoldTimer === null) {
+        gk.gkHoldTimer = 1.1;
+      }
+      gk.gkHoldTimer -= dt;
 
-      // Detenerse un breve momento para afianzar el agarre y luego enviar el balón
+      // El arquero se asegura el balón con ambas manos sin moverse
       gk.vx = 0;
       gk.vy = 0;
 
+      // Mantener el balón seguro bien pegado al arquero
+      ball.x = gk.x + (isHome ? 12 : -12);
+      ball.y = gk.y;
+      ball.vx = 0;
+      ball.vy = 0;
+
       if (gk.gkHoldTimer <= 0) {
         gk.gkHoldTimer = null;
-        // Enviar el balón con potencia hacia el campo rival
+        // DISPARAR / ENVIAR EL BALÓN CON UN DESPEJE FUERTE Y PRECISO HACIA EL CAMPO RIVAL
         const kickDirX = isHome ? 1 : -1;
-        const kickDirY = (Math.random() - 0.5) * 0.4;
-        const sendPower = 11.0 + (gk.shotPower / 100) * 3.0; // Despeje largo
+        const kickDirY = (Math.random() - 0.5) * 0.35;
+        const sendPower = 13.5 + (gk.shotPower / 100) * 3.5; // Saque largo
 
-        ball.kick(kickDirX * sendPower, kickDirY * sendPower, gk);
-        gk.kickCooldown = 0.8;
+        gk.triggerShootAnimation();
+        ball.kick(kickDirX * sendPower, kickDirY * sendPower, gk, {
+          altitude: 9.0,
+          verticalVelocity: 5.5,
+        });
+        gk.kickCooldown = 0.6;
       }
       return;
     }

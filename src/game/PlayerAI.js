@@ -94,7 +94,20 @@ export class PlayerAI {
     if (isDesignatedPresser && !teamHasBall) {
       const distFromHome = distance(player.homeX, player.homeY, ball.x, ball.y);
       if (distFromHome < pressDistance || player.position === 'FWD' || difficulty === DIFFICULTY.HARD) {
-        const dir = normalize(ball.x - player.x, ball.y - player.y);
+        let dir = normalize(ball.x - player.x, ball.y - player.y);
+
+        // Desvío anticolisión: Si hay un compañero muy pegado en la misma trayectoria, rodearlo
+        const nearbyTeammate = outfieldTeammates.find(m => m !== player && distance(m.x, m.y, player.x, player.y) < 28);
+        if (nearbyTeammate) {
+          const sideX = -(nearbyTeammate.y - player.y);
+          const sideY = (nearbyTeammate.x - player.x);
+          const sideDir = normalize(sideX, sideY);
+          dir = {
+            x: dir.x * 0.7 + sideDir.x * 0.5,
+            y: dir.y * 0.7 + sideDir.y * 0.5
+          };
+        }
+
         // Cuando persigue el balón usa sprint proporcional idéntico al usuario
         const spd = (player.speed / 100) * 2.85 * speedFactor;
         player.vx = dir.x * spd;

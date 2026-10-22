@@ -63,6 +63,11 @@ export class Player {
     this.diveExtension = 0;
   }
 
+  triggerSaveHoldAnimation() {
+    this.isHoldingBall = true;
+    this.holdAnimTimer = 1.2;
+  }
+
   triggerDive(dirY = 0, duration = 0.65) {
     this.isDiving = true;
     this.diveTimer = duration;
@@ -151,6 +156,13 @@ export class Player {
       this.shootAnimTimer -= dt;
       if (this.shootAnimTimer <= 0) {
         this.isShooting = false;
+      }
+    }
+
+    if (this.holdAnimTimer > 0) {
+      this.holdAnimTimer -= dt;
+      if (this.holdAnimTimer <= 0) {
+        this.isHoldingBall = false;
       }
     }
 
@@ -587,6 +599,18 @@ export class Player {
       } else {
         ctx.rect(-kickDirX * 11, -5, 4, 4);
         ctx.rect(kickDirX * 8, -2, 4, 4);
+      }
+      ctx.fill();
+    } else if (this.isHoldingBall && isGK) {
+      // Postura de atajada con ambas manos asegurando el balón en el pecho
+      ctx.fillStyle = '#22c55e'; // Guantes verdes de agarre
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(-5, -2, 4, 5, 2);
+        ctx.roundRect(1, -2, 4, 5, 2);
+      } else {
+        ctx.rect(-5, -2, 4, 5);
+        ctx.rect(1, -2, 4, 5);
       }
       ctx.fill();
     } else {

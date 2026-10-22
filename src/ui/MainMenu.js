@@ -127,10 +127,11 @@ export class MainMenu {
     let t = 0;
     let animId = null;
 
-    // Tres jugadas maestras que van rotando en bucle:
+    // Cuatro jugadas maestras que van rotando en bucle:
     // 0: Golazo acrobático de Chilena al ángulo
     // 1: Dribble quiebre 1v1 y Cañonazo fusilando la red
     // 2: Vaselina / Sombrerito picado por arriba del arquero
+    // 3: ¡ATAJADÓN MONUMENTAL! El arquero vuela en cámara lenta, tapa el tiro, retiene el balón y despeja
     const plays = [
       {
         title: '⚡ ¡¡¡GOOOOOOOOOOOOLAZO DE CHILENA!!! ⚡',
@@ -143,6 +144,10 @@ export class MainMenu {
       {
         title: '🎩 ¡¡¡OBRA DE ARTE / VASELINA!!! 🎩',
         subtitle: '¡La picó con sutileza por encima del arquero!'
+      },
+      {
+        title: '🧤 ¡¡ATAJADA ÉPICA Y DESPEJE DEL ARQUERO!! 🧤',
+        subtitle: '¡Vuelo felino al ángulo, retención en dos manos y contraataque!'
       }
     ];
 
@@ -360,7 +365,7 @@ export class MainMenu {
       }
 
       // --- JUGADA 2: VASELINA / SOMBRERITO PICADO CON CLASE ---
-      else {
+      else if (playIndex === 2) {
         if (progress < 0.35) {
           // Conducción mano a mano
           const p = progress / 0.35;
@@ -389,6 +394,53 @@ export class MainMenu {
           ballX = goalX + 20;
           ballY = (goalY + 45) + Math.sin(t * 10) * 3;
           gkX = goalX - 75;
+        }
+      }
+
+      // --- JUGADA 3: PARADÓN DEL ARQUERO, RETENCIÓN Y SAQUE/DISPARO POTENTE ---
+      else {
+        if (progress < 0.30) {
+          // Delantero enfila y saca cañonazo al ángulo
+          const p = progress / 0.30;
+          strikerX = (W * 0.32) + p * 60;
+          strikerY = strikerGroundY;
+          ballX = strikerX + 10;
+          ballY = H * 0.84;
+        } else if (progress < 0.58) {
+          // Balón va disparado al ángulo superior del arco
+          const bp = (progress - 0.30) / 0.28;
+          strikerX = (W * 0.38);
+          strikerY = strikerGroundY;
+          const targetFlyX = goalX - 25;
+          const targetFlyY = goalY + 30;
+
+          ballX = (W * 0.40) + bp * (targetFlyX - (W * 0.40));
+          ballY = (H * 0.82) - Math.sin(bp * Math.PI * 0.5) * 80;
+
+          // Arquero vuela estirándose en el aire hacia el ángulo
+          gkX = (goalX - 45) + bp * 20;
+          gkY = (goalY + goalH - 18) - Math.sin(bp * Math.PI * 0.95) * 85;
+          gkAngle = -0.75;
+        } else if (progress < 0.78) {
+          // El arquero aterriza de pie con el balón seguro en sus dos guantes
+          const landP = (progress - 0.58) / 0.20;
+          strikerX = (W * 0.38);
+          gkX = goalX - 35;
+          gkY = (goalY + goalH - 18);
+          gkAngle = 0;
+          ballX = gkX + 6;
+          ballY = gkY - 6;
+        } else {
+          // El arquero envía y dispara un saque volea fortísimo hacia adelante
+          const kickP = (progress - 0.78) / 0.22;
+          strikerX = (W * 0.38);
+          gkX = goalX - 35;
+          gkY = goalY + goalH - 18;
+          gkAngle = 0.25;
+
+          // Balón vuela alto en contragolpe
+          ballX = (goalX - 35) - kickP * (W * 0.65);
+          ballY = (goalY + goalH - 18) - Math.sin(kickP * Math.PI) * 110;
         }
       }
 

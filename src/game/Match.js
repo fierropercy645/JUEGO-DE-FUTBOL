@@ -623,8 +623,8 @@ export class Match {
     // AI Updates
     const homeGK = this.homeTeam.players[0];
     const awayGK = this.awayTeam.players[0];
-    GoalkeeperAI.update(homeGK, this.ball, PITCH.WIDTH, PITCH.HEIGHT, this.difficulty);
-    GoalkeeperAI.update(awayGK, this.ball, PITCH.WIDTH, PITCH.HEIGHT, this.difficulty);
+    GoalkeeperAI.update(homeGK, this.ball, PITCH.WIDTH, PITCH.HEIGHT, this.difficulty, null, dt);
+    GoalkeeperAI.update(awayGK, this.ball, PITCH.WIDTH, PITCH.HEIGHT, this.difficulty, null, dt);
 
     this.homeTeam.players.forEach(p => {
       if (p !== this.userControlledPlayer && p !== homeGK) {
