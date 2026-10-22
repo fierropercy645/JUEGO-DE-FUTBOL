@@ -175,8 +175,17 @@ export class MatchScreen {
       this.match.selectPlayerAtCoordinates(clickX, clickY);
     });
 
-    // Setup Controles Táctiles (Joystick + Botones)
-    this.setupTouchControls(container);
+    // Detección de dispositivo táctil / móvil
+    this.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+
+    // Setup Controles Táctiles (solo si es dispositivo táctil)
+    if (this.isTouchDevice) {
+      container.querySelector('#touchControlsLayer')?.classList.add('touch-active');
+      this.setupTouchControls(container);
+    } else {
+      const touchLayer = container.querySelector('#touchControlsLayer');
+      if (touchLayer) touchLayer.style.display = 'none';
+    }
 
     // Start game loop
     this.gameLoop.start();
