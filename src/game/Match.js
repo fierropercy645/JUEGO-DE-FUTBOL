@@ -117,24 +117,27 @@ export class Match {
       taker.facingX = awardedTeam.isHome ? 1 : -1;
       taker.facingY = outEvent.cornerY < PITCH.HEIGHT / 2 ? 1 : -1;
       this.ball.setOwner(taker);
+      this.stateTimer = 10.0; // Tiempo para centrar o patear olímpico
 
       // Posicionar jugadores en el área para cabecear o defender el centro de córner
-      const penaltyBoxX = outEvent.side === 'left' ? 120 : PITCH.WIDTH - 120;
+      const penaltyBoxX = outEvent.side === 'left' ? 140 : PITCH.WIDTH - 140;
       const midBoxY = PITCH.HEIGHT / 2;
 
-      // Atacantes al área
-      awardedTeam.players.forEach(p => {
+      // Atacantes al área para rematar de cabeza
+      awardedTeam.players.forEach((p, idx) => {
         if (p !== taker && p.position !== 'GK') {
-          p.x = penaltyBoxX + (Math.random() - 0.5) * 60;
-          p.y = midBoxY + (Math.random() - 0.5) * 120;
+          p.x = penaltyBoxX + (idx === 1 ? -20 : 20);
+          p.y = midBoxY + (idx === 1 ? -35 : 35);
+          p.facingX = awardedTeam.isHome ? 1 : -1;
         }
       });
 
-      // Defensores al área
-      defendingTeam.players.forEach(p => {
+      // Defensores al área marcando
+      defendingTeam.players.forEach((p, idx) => {
         if (p.position !== 'GK') {
-          p.x = penaltyBoxX + (Math.random() - 0.5) * 40;
-          p.y = midBoxY + (Math.random() - 0.5) * 100;
+          p.x = penaltyBoxX + (idx % 2 === 0 ? -10 : 10);
+          p.y = midBoxY + (idx % 2 === 0 ? -25 : 25);
+          p.facingX = defendingTeam.isHome ? 1 : -1;
         }
       });
 
@@ -142,7 +145,7 @@ export class Match {
         this.setUserControlledPlayer(taker);
       }
 
-      this.showBanner('TIRO DE ESQUINA', `Córner para ${awardedTeam.name}`, 1.5);
+      this.showBanner('¡TIRO DE ESQUINA!', `Céntralo con PASE (J/A) o busca el Gol Olímpico con TIRO (Espacio/B)`, 3.2);
     }
   }
 
@@ -159,7 +162,9 @@ export class Match {
     if (this.state !== GAME_STATES.PLAYING &&
         this.state !== GAME_STATES.THROW_IN &&
         this.state !== GAME_STATES.GOAL_KICK &&
-        this.state !== GAME_STATES.CORNER_KICK) {
+        this.state !== GAME_STATES.CORNER_KICK &&
+        this.state !== GAME_STATES.FREE_KICK &&
+        this.state !== GAME_STATES.PENALTY_KICK) {
       return;
     }
 
@@ -358,7 +363,7 @@ export class Match {
 
   triggerPenaltyKick(awardedTeam, fouledPlayer) {
     this.state = GAME_STATES.PENALTY_KICK;
-    this.stateTimer = 3.0;
+    this.stateTimer = 15.0; // Tiempo para que el jugador apunte, cargue potencia y patee
 
     const isHome = awardedTeam.isHome;
     const fieldLeft = PITCH.FIELD_MARGIN_X || 60;
@@ -367,32 +372,51 @@ export class Match {
     const penaltyY = PITCH.HEIGHT / 2;
 
     this.ball.reset(penaltyX, penaltyY);
-    fouledPlayer.x = penaltyX - (isHome ? 18 : -18);
+    fouledPlayer.x = penaltyX - (isHome ? 22 : -22);
     fouledPlayer.y = penaltyY;
     fouledPlayer.facingX = isHome ? 1 : -1;
     fouledPlayer.facingY = 0;
     this.ball.setOwner(fouledPlayer);
 
+    // El arquero rival se planta en la línea de gol listo para atajar
+    const defendingTeam = isHome ? this.awayTeam : this.homeTeam;
+    const gk = defendingTeam.players[0];
+    gk.x = isHome ? fieldRight - 15 : fieldLeft + 15;
+    gk.y = penaltyY;
+
     if (isHome) {
       this.setUserControlledPlayer(fouledPlayer);
     }
 
-    this.showBanner('¡PENAAAAAL!', `Falta dentro del área para ${awardedTeam.name}`, 2.0);
+    this.showBanner('¡PENAAAAAL!', `Carga potencia con ESPACIO / B para patear al arco`, 3.5);
   }
 
   triggerFreeKick(awardedTeam, fouledPlayer) {
     this.state = GAME_STATES.FREE_KICK;
-    this.stateTimer = 2.0;
+    this.stateTimer = 12.0; // Tiempo suficiente para acomodarse y patear el tiro libre
 
     this.ball.reset(fouledPlayer.x, fouledPlayer.y);
     fouledPlayer.facingX = awardedTeam.isHome ? 1 : -1;
+    fouledPlayer.facingY = 0;
     this.ball.setOwner(fouledPlayer);
+
+    // Formar barrera defensiva con 2 jugadores del equipo rival a distancia reglamentaria
+    const defendingTeam = awardedTeam.isHome ? this.awayTeam : this.homeTeam;
+    const wallDist = awardedTeam.isHome ? 75 : -75;
+    const wallPlayers = defendingTeam.players.filter(p => p.position !== 'GK').slice(0, 2);
+    wallPlayers.forEach((wp, idx) => {
+      wp.x = fouledPlayer.x + wallDist;
+      wp.y = fouledPlayer.y + (idx === 0 ? -16 : 16);
+      wp.vx = 0;
+      wp.vy = 0;
+      wp.facingX = awardedTeam.isHome ? -1 : 1;
+    });
 
     if (awardedTeam.isHome) {
       this.setUserControlledPlayer(fouledPlayer);
     }
 
-    this.showBanner('¡FALTA!', `Tiro libre para ${awardedTeam.name}`, 1.5);
+    this.showBanner('¡TIRO LIBRE POR FALTA!', `Patea con ESPACIO/B o pasa con J/A`, 3.0);
   }
 
   switchUserPlayer() {

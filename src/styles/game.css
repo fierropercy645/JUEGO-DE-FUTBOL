@@ -267,53 +267,123 @@
 /* Adaptación responsive para pantallas de teléfono en horizontal y vertical */
 @media (max-width: 900px) {
   .match-container {
-    padding: 2px 0;
+    padding: 0;
     justify-content: center;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .canvas-wrapper {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #matchCanvas {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover; /* En celular llena el 100% de la pantalla sin cortes feos ni bandas */
   }
 
   .match-hud {
-    padding: 4px 12px;
-    gap: 10px;
-    margin-bottom: 4px;
-    font-size: 0.65rem;
+    top: 6px;
+    padding: 3px 10px;
+    gap: 8px;
+    margin-bottom: 0;
+    font-size: 0.6rem;
+    max-width: 92vw;
   }
 
   .hud-team {
-    font-size: 0.65rem;
-    gap: 6px;
+    font-size: 0.6rem;
+    gap: 4px;
   }
 
   .hud-score {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     padding: 2px 8px;
+    letter-spacing: 1px;
   }
 
   .controls-hint-bar {
-    display: none; /* En celular se oculta la barra de teclas para ganar espacio de juego */
+    display: none !important; /* En celular se oculta la barra de teclas para ganar espacio de juego */
   }
 
   .joystick-base {
-    width: 95px;
-    height: 95px;
+    width: 100px;
+    height: 100px;
   }
 
   .joystick-knob {
+    width: 44px;
+    height: 44px;
+  }
+
+  .touch-actions-main-row .touch-action-btn {
+    width: 54px;
+    height: 54px;
+  }
+
+  .touch-actions-top-row .touch-action-btn {
     width: 42px;
     height: 42px;
   }
 
-  .touch-actions-main-row .touch-action-btn {
-    width: 52px;
-    height: 52px;
-  }
-
-  .touch-actions-top-row .touch-action-btn {
-    width: 40px;
-    height: 40px;
-  }
-
   .touch-controls-layer {
     padding: 8px 12px;
+  }
+}
+
+/* AVISO ELEGANTE CUANDO EL CELULAR ESTÁ EN VERTICAL (PORTRAIT) */
+.rotate-device-notice {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(6, 9, 17, 0.96);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.rotate-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  animation: rotatePhoneAnim 2s infinite ease-in-out;
+}
+
+.rotate-title {
+  color: var(--accent-gold);
+  font-size: 1.1rem;
+  font-weight: 900;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.rotate-subtitle {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  max-width: 320px;
+}
+
+@keyframes rotatePhoneAnim {
+  0% { transform: rotate(0deg); }
+  40% { transform: rotate(-90deg); }
+  60% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Solo se muestra si el dispositivo es táctil y está en vertical */
+@media (pointer: coarse) and (orientation: portrait), (max-width: 600px) and (orientation: portrait) {
+  .rotate-device-notice {
+    display: flex;
   }
 }
 

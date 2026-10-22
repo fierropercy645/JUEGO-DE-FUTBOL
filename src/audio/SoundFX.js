@@ -20,32 +20,34 @@ class SoundFX {
     }
   }
 
-  // Grito eufórico de GOL con narrador en español y ovación del estadio
+  // Grito eufórico de GOL con narrador en español latino y ovación vibrante del estadio
   playGoalCelebration() {
     this.init();
 
-    // 1. Narrador de fútbol enérgico ("¡¡¡GOOOOOOL!!!")
+    // 1. Narrador de fútbol enérgico ("¡¡¡GOOOOOOL!!!") con voz humana y entonación apasionada
     if (this.speechAvailable && window.speechSynthesis) {
       try {
-        window.speechSynthesis.cancel(); // Detener audios anteriores
+        window.speechSynthesis.cancel(); // Detener cualquier audio previo
         const phrases = [
-          '¡¡GOOOOOOOOOOOOL!! ¡Qué golazo!',
-          '¡¡GOOOOOOOL!! ¡Adentro!',
-          '¡¡GOOOOOOOOOOOOLAZO!! ¡Tremendo gol!',
-          '¡¡GOOOOOOOL!! ¡Infló las redes!'
+          '¡¡GOOOOOOOOOOOOOOOOOOL!! ¡Goooooool, qué golazo impresionante!',
+          '¡¡GOOOOOOOOOOOOOL!! ¡Gol, gol, gol, adentrooooo!',
+          '¡¡GOOOOOOOOOOOOOOOOOOL!! ¡Qué definición magistral, golazo tremendo!',
+          '¡¡GOOOOOOOOOOOOL!! ¡Golazo descomunal, explota el estadio!'
         ];
         const phrase = phrases[Math.floor(Math.random() * phrases.length)];
         const utterance = new SpeechSynthesisUtterance(phrase);
-        utterance.lang = 'es-ES';
-        utterance.rate = 1.15;
-        utterance.pitch = 1.35;
+        utterance.lang = 'es-419'; // Español latinoamericano apasionado o 'es-ES'
+        utterance.rate = 1.05; // Velocidad natural con fuerza
+        utterance.pitch = 1.15; // Tono vibrante sin sonar robótico ni agudo
         utterance.volume = 1.0;
 
-        // Intentar usar voz en español si está disponible
+        // Buscar la voz en español de mejor calidad instalada en el dispositivo
         const voices = window.speechSynthesis.getVoices();
-        const spanishVoice = voices.find(v => v.lang.startsWith('es'));
-        if (spanishVoice) {
-          utterance.voice = spanishVoice;
+        const bestVoice = voices.find(v => (v.lang.startsWith('es') || v.lang.includes('Spanish')) && (v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Google') || v.name.includes('Sabina') || v.name.includes('Jorge') || v.name.includes('Raul')))
+          || voices.find(v => v.lang.startsWith('es'));
+        
+        if (bestVoice) {
+          utterance.voice = bestVoice;
         }
 
         window.speechSynthesis.speak(utterance);
@@ -58,9 +60,9 @@ class SoundFX {
     if (this.ctx) {
       try {
         const now = this.ctx.currentTime;
-        const dur = 2.5;
+        const dur = 3.2;
 
-        // Generador de ruido blanco filtrado (emula la explosión de la tribuna)
+        // Generador de ruido blanco filtrado (emula la explosión monumental de la tribuna)
         const bufferSize = this.ctx.sampleRate * dur;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -71,17 +73,17 @@ class SoundFX {
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
 
-        // Filtro pasa banda para darle acústica de estadio
+        // Filtro pasa banda para darle acústica de caldera de estadio
         const filter = this.ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(450, now);
-        filter.frequency.exponentialRampToValueAtTime(800, now + dur);
-        filter.Q.setValueAtTime(1.2, now);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(600, now);
+        filter.frequency.linearRampToValueAtTime(1400, now + 0.3);
+        filter.frequency.exponentialRampToValueAtTime(450, now + dur);
 
         // Ganancia con envolvente de explosión
         const gain = this.ctx.createGain();
         gain.gain.setValueAtTime(0.01, now);
-        gain.gain.linearRampToValueAtTime(0.45, now + 0.15);
+        gain.gain.linearRampToValueAtTime(0.65, now + 0.12);
         gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
 
         noise.connect(filter);
@@ -91,19 +93,21 @@ class SoundFX {
         noise.start(now);
         noise.stop(now + dur);
 
-        // Claxon / Corneta festiva de estadio
-        const hornOsc = this.ctx.createOscillator();
-        const hornGain = this.ctx.createGain();
-        hornOsc.type = 'sawtooth';
-        hornOsc.frequency.setValueAtTime(320, now);
-        hornOsc.frequency.linearRampToValueAtTime(360, now + 0.6);
-        hornGain.gain.setValueAtTime(0.18, now);
-        hornGain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+        // Claxon / Corneta festiva de estadio (Doble toque festivo de gol)
+        [0, 0.45].forEach(delay => {
+          const hornOsc = this.ctx.createOscillator();
+          const hornGain = this.ctx.createGain();
+          hornOsc.type = 'sawtooth';
+          hornOsc.frequency.setValueAtTime(340, now + delay);
+          hornOsc.frequency.linearRampToValueAtTime(380, now + delay + 0.35);
+          hornGain.gain.setValueAtTime(0.22, now + delay);
+          hornGain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.4);
 
-        hornOsc.connect(hornGain);
-        hornGain.connect(this.ctx.destination);
-        hornOsc.start(now);
-        hornOsc.stop(now + 0.8);
+          hornOsc.connect(hornGain);
+          hornGain.connect(this.ctx.destination);
+          hornOsc.start(now + delay);
+          hornOsc.stop(now + delay + 0.4);
+        });
       } catch (e) {
         console.warn('AudioContext synth error:', e);
       }

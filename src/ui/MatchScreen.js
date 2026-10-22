@@ -105,6 +105,16 @@ export class MatchScreen {
           </div>
         </div>
 
+        <!-- Capa de orientación para celulares (Pide girar a horizontal si está vertical) -->
+        <div class="rotate-device-notice" id="rotateDeviceNotice">
+          <div class="rotate-icon">📱 ➔ 🔄</div>
+          <div class="rotate-title">GIRA TU CELULAR EN HORIZONTAL</div>
+          <div class="rotate-subtitle">Para ver todo el estadio gigante y jugar con los controles táctiles cómodamente</div>
+          <button type="button" class="btn btn-primary" id="btnForceLandscape" style="margin-top:12px; font-size:0.75rem;">
+            🖥️ Pantalla Completa
+          </button>
+        </div>
+
         <!-- Controls Hint Bar -->
         <div class="controls-hint-bar">
           <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Moverse</span>
@@ -178,6 +188,26 @@ export class MatchScreen {
     // Detección de dispositivo táctil / móvil
     this.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
 
+    // Botón de pantalla completa / forzar orientación para móvil
+    const btnForceLandscape = container.querySelector('#btnForceLandscape');
+    btnForceLandscape?.addEventListener('click', () => {
+      try {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (e) {}
+    });
+
+    // Intentar bloquear orientación a horizontal en dispositivos móviles
+    if (this.isTouchDevice && screen.orientation && screen.orientation.lock) {
+      try {
+        screen.orientation.lock('landscape').catch(() => {});
+      } catch (e) {}
+    }
+
     // Setup Controles Táctiles (solo si es dispositivo táctil)
     if (this.isTouchDevice) {
       container.querySelector('#touchControlsLayer')?.classList.add('touch-active');
@@ -185,6 +215,8 @@ export class MatchScreen {
     } else {
       const touchLayer = container.querySelector('#touchControlsLayer');
       if (touchLayer) touchLayer.style.display = 'none';
+      const rotateNotice = container.querySelector('#rotateDeviceNotice');
+      if (rotateNotice) rotateNotice.style.display = 'none';
     }
 
     // Start game loop
