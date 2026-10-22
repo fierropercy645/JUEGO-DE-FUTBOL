@@ -100,16 +100,17 @@ export class CollisionSystem {
     const dy = ball.y - gk.y;
     const dist = Math.hypot(dx, dy);
     
-    // Alcance generoso y cobertura del arco
-    let saveRadius = gk.radius + ball.radius + 24;
-    let saveProbability = 0.92;
+    // Alcance generoso y cobertura del arco consistente en TODOS los modos
+    // El arquero ataja con calidad profesional tanto en Fácil, Normal como Difícil
+    let saveRadius = gk.radius + ball.radius + 28;
+    let saveProbability = 0.93;
 
     if (difficulty === 'facil') {
-      saveRadius = gk.radius + ball.radius + 16;
-      saveProbability = 0.78; // Tapa tiros comunes y ataja con dignidad
+      saveRadius = gk.radius + ball.radius + 24;
+      saveProbability = 0.88; // Tapadas firmes para que no entren goles fáciles de mitad de cancha
     } else if (difficulty === 'dificil') {
       saveRadius = gk.radius + ball.radius + 32;
-      saveProbability = 0.96; // En difícil el arquero es un muro pero batible con buenas jugadas
+      saveProbability = 0.96; // En difícil exige jugadas tejidas, pases y quiebres
     }
 
     // Tiros lejanos o colocados

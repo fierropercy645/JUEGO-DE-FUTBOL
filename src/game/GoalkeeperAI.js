@@ -15,11 +15,13 @@ export class GoalkeeperAI {
     const goalX = isHome ? fieldLeft + 15 : fieldRight - 15;
     const goalY = pitchHeight / 2;
 
-    let speedFactor = 0.85;
+    // En TODOS los modos el arquero tiene reflejos y reacción consistente
+    // para evitar goleadas absurdas de 20 goles por tiros fáciles
+    let speedFactor = 1.0;
     if (difficulty === DIFFICULTY.EASY) {
-      speedFactor = 0.45; // El arquero fácil es lento y concede muchos goles
+      speedFactor = 0.92;
     } else if (difficulty === DIFFICULTY.HARD) {
-      speedFactor = 1.15; // Ágil pero humano
+      speedFactor = 1.08;
     }
 
     // SI EL ARQUERO TIENE EL BALÓN (LO RECIBIÓ O ATRAPÓ TRAS ATAJAR):

@@ -11,18 +11,19 @@ export class PlayerAI {
   static update(player, ball, team, opponentTeam, pitchWidth, pitchHeight, difficulty = DIFFICULTY.NORMAL, executePassCb, executeShootCb) {
     if (player.position === 'GK') return;
 
-    // Velocidades 1:1 basadas estrictamente en los atributos del jugador (cero trampas de velocidad)
+    // Velocidades 1:1 basadas estrictamente en los atributos del jugador en TODOS los modos
+    // El orden táctico, la marca individual y la cobertura de zona aplican de manera uniforme
     let speedFactor = 1.0;
     let shootChance = 0.045;
-    let passChance = 0.04;
+    let passChance = 0.045;
     let shootRange = 260;
 
     if (difficulty === DIFFICULTY.EASY) {
-      speedFactor = 0.88;
-      shootChance = 0.025;
-      passChance = 0.025;
+      speedFactor = 0.95; // Competitivo y divertido sin efecto enjambre
+      shootChance = 0.035;
+      passChance = 0.035;
     } else if (difficulty === DIFFICULTY.HARD) {
-      speedFactor = 1.05; // Ajuste parejo y realista, sin correr desenfrenadamente
+      speedFactor = 1.05; // Marcaje estricto y buen criterio
       shootChance = 0.06;
       passChance = 0.055;
     }
